@@ -3,50 +3,57 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.sonatype.spice</groupId>
-    <artifactId>spice-parent</artifactId>
-    <version>15</version>
+    <groupId>org.codehaus.plexus</groupId>
+    <artifactId>plexus</artifactId>
+    <version>6.5</version>
+    <relativePath/>
   </parent>
   
-  <groupId>org.sonatype.plexus</groupId>
   <artifactId>plexus-sec-dispatcher</artifactId>
   <version>1.5-SNAPSHOT</version>
 
-  <url>http://spice.sonatype.org/${project.artifactId}</url>
   <name>Plexus Security Dispatcher Component</name>
-  
+
+  <scm>
+    <connection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</connection>
+    <developerConnection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</developerConnection>
+    <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</url>
+  </scm>
+  <issueManagement>
+    <system>jira</system>
+    <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/issues</url>
+  </issueManagement>
+
   <distributionManagement>
     <site>
-      <id>sonatype.org-sites</id>
-      <url>${spiceSiteBaseUrl}/${project.artifactId}</url>
+      <id>github:gh-pages</id>
+      <url>${project.scm.developerConnection}</url>
     </site>
   </distributionManagement>
-  
+
+  <properties>
+    <javaVersion>7</javaVersion>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
-        <groupId>org.codehaus.plexus</groupId>
-        <artifactId>plexus-maven-plugin</artifactId>
-        <version>1.3.5</version>
+        <groupId>org.eclipse.sisu</groupId>
+        <artifactId>sisu-maven-plugin</artifactId>
+        <version>0.3.4</version>
         <executions>
           <execution>
             <goals>
-              <goal>descriptor</goal>
+              <goal>main-index</goal>
+              <goal>test-index</goal>
             </goals>
           </execution>
         </executions>
       </plugin>
       <plugin>
-        <artifactId>maven-compiler-plugin
-        </artifactId>
-        <configuration>
-          <source>1.4</source>
-          <target>1.4</target>
-        </configuration>
-      </plugin>
-      <plugin>
         <groupId>org.codehaus.modello</groupId>
         <artifactId>modello-maven-plugin</artifactId>
+        <version>1.11</version>
         <configuration>
           <version>1.0.0</version>
           <models>
@@ -72,11 +79,12 @@
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-utils</artifactId>
+      <version>3.3.0</version>
     </dependency>
     <dependency>
-      <groupId>org.sonatype.plexus</groupId>
+      <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cipher</artifactId>
-      <version>1.4</version>
+      <version>1.8</version>
     </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
@@ -87,7 +95,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>4.13.2</version>
     </dependency>
   </dependencies>
 </project>
