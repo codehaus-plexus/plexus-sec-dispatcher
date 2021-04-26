@@ -53,9 +53,9 @@ implements SecDispatcher
     /**
      * All available dispatchers
      * 
-     * @plexus.requirement role="org.sonatype.plexus.components.sec.dispatcher.PasswordDecryptor"
+     * @plexus.requirement role="org.sonatype.plexus.components.sec.dispatcher.PasswordDecrypter"
      */
-    protected Map _decryptors;
+    protected Map _decrypters;
 
     /**
      * 
@@ -99,12 +99,12 @@ implements SecDispatcher
             {
                 String type = (String) attr.get( TYPE_ATTR );
                 
-                if( _decryptors == null )
+                if( _decrypters == null )
                     throw new SecDispatcherException( "plexus container did not supply any required dispatchers - cannot lookup "+type );
                 
                 Map conf = SecUtil.getConfig( sec, type );
                 
-                PasswordDecryptor dispatcher = (PasswordDecryptor) _decryptors.get( type );
+                PasswordDecrypter dispatcher = (PasswordDecrypter) _decrypters.get( type );
                 
                 if( dispatcher == null )
                     throw new SecDispatcherException( "no dispatcher for hint "+type );
