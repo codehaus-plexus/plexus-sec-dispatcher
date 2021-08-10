@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 Sonatype, Inc. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -99,9 +99,8 @@ extends TestCase
     public void testDecrypt()
     throws Exception
     {
-        DefaultSecDispatcher sd = new DefaultSecDispatcher();
-        sd._cipher = new DefaultPlexusCipher();
-        
+        DefaultSecDispatcher sd = new DefaultSecDispatcher(new DefaultPlexusCipher());
+
         String pass = sd.decrypt( _encrypted );
         
         assertNotNull( pass );

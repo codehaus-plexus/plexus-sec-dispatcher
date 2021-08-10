@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 Sonatype, Inc. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -13,7 +13,6 @@
  
 package org.sonatype.plexus.components.sec.dispatcher;
 
-
 /**
  * This component decrypts a string, passed to it
  * 
@@ -21,11 +20,9 @@ package org.sonatype.plexus.components.sec.dispatcher;
  */
 public interface SecDispatcher
 {
-    public static String ROLE = SecDispatcher.class.getName();
+    String [] SYSTEM_PROPERTY_MASTER_PASSWORD = new String [] {"settings.master.password","settings-master-password"};
     
-    public static final String [] SYSTEM_PROPERTY_MASTER_PASSWORD = new String [] {"settings.master.password","settings-master-password"};
-    
-    public static final String [] SYSTEM_PROPERTY_SERVER_PASSWORD = new String [] {"settings.server.password","settings-server-password"};
+    String [] SYSTEM_PROPERTY_SERVER_PASSWORD = new String [] {"settings.server.password","settings-server-password"};
 
     /**
      * decrypt given encrypted string
@@ -34,6 +31,5 @@ public interface SecDispatcher
      * @return decrypted string
      * @throws SecDispatcherException
      */
-    String decrypt( String str )
-    throws SecDispatcherException;
+    String decrypt( String str ) throws SecDispatcherException;
 }

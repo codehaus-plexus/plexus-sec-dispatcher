@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 Sonatype, Inc. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -24,8 +24,6 @@ import java.util.Map;
  */
 public interface PasswordDecryptor
 {
-    public static String ROLE = PasswordDecryptor.class.getName();
-
     /**
      * decrypt given encrypted string
      * 
@@ -36,6 +34,5 @@ public interface PasswordDecryptor
      * 
      * @throws SecDispatcherException
      */
-    String decrypt( String str, Map attributes, Map config )
-    throws SecDispatcherException;
+    String decrypt( String str, Map attributes, Map config ) throws SecDispatcherException;
 }

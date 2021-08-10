@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) 2008 Sonatype, Inc. All rights reserved.
  *
  * This program is licensed to you under the Apache License Version 2.0,
@@ -16,11 +16,6 @@ package org.sonatype.plexus.components.sec.dispatcher;
 public class SecDispatcherException
     extends Exception
 {
-
-    public SecDispatcherException()
-    {
-    }
-
     public SecDispatcherException( String message )
     {
         super( message );
@@ -35,5 +30,4 @@ public class SecDispatcherException
     {
         super( message, cause );
     }
-
 }
