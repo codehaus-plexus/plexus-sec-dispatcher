@@ -18,13 +18,17 @@ package org.sonatype.plexus.components.sec.dispatcher;
 import java.io.FileWriter;
 import java.util.Map;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.sec.dispatcher.model.Config;
 import org.sonatype.plexus.components.sec.dispatcher.model.ConfigProperty;
 import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
 import org.sonatype.plexus.components.sec.dispatcher.model.io.xpp3.SecurityConfigurationXpp3Writer;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  *
@@ -34,7 +38,6 @@ import org.sonatype.plexus.components.sec.dispatcher.model.io.xpp3.SecurityConfi
  *
  */
 public class SecUtilTest
-extends TestCase
 {
     String _pw = "{1wQaa6S/o8MH7FnaTNL53XmhT5O0SEGXQi3gC49o6OY=}";
     
@@ -47,8 +50,9 @@ extends TestCase
     String _propName = "pname";
     
     String _propVal = "pval";
-    
-    protected void setUp()
+
+    @Before
+    public void prepare()
     throws Exception
     {
         System.setProperty( DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION, "./target/sec.xml" );
@@ -78,6 +82,7 @@ extends TestCase
         new SecurityConfigurationXpp3Writer().write( new FileWriter("./target/sec1.xml"), sec );
     }
 
+    @Test
     public void testRead()
     throws Exception
     {
@@ -96,6 +101,7 @@ extends TestCase
         assertEquals( _propVal, conf.get( _propName ) );
     }
 
+    @Test
     public void testDecrypt()
     throws Exception
     {
