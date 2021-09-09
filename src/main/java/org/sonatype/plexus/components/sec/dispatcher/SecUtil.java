@@ -85,13 +85,14 @@ public class SecUtil
           String protocol = resource.substring( 0, ind );
           resource = resource.substring( ind + PROTOCOL_DELIM_LEN );
 
-          for (String p : URL_PROTOCOLS) {
-              if (protocol.regionMatches(true, 0, p, 0, p.length()))
-                  return new URL(p + PROTOCOL_DELIM + resource).openStream();
+          for ( String p : URL_PROTOCOLS ) {
+              if ( protocol.regionMatches( true, 0, p, 0, p.length() ) ) {
+                  return new URL( p + PROTOCOL_DELIM + resource ).openStream();
+              }
           }
       }
 
-      return new FileInputStream(resource);
+      return new FileInputStream( resource );
     }
     //---------------------------------------------------------------------------------------------------------------
     public static Map<String, String> getConfig( SettingsSecurity sec, String name )
@@ -104,19 +105,21 @@ public class SecUtil
         if( cl == null || cl.isEmpty() )
             return null;
 
-        for (Config cf : cl) {
-            if (!name.equals(cf.getName()))
+        for ( Config cf : cl ) {
+            if ( !name.equals( cf.getName() ) ) {
                 continue;
+            }
 
             List<ConfigProperty> pl = cf.getProperties();
 
-            if (pl == null || pl.isEmpty())
+            if ( pl == null || pl.isEmpty() ) {
                 return null;
+            }
 
-            Map<String, String> res = new HashMap<>(pl.size());
+            Map<String, String> res = new HashMap<>( pl.size() );
 
-            for (ConfigProperty p : pl) {
-                res.put(p.getName(), p.getValue());
+            for ( ConfigProperty p : pl ) {
+                res.put( p.getName(), p.getValue() );
             }
 
             return res;
