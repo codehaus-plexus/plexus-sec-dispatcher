@@ -63,10 +63,10 @@ public class DefaultSecDispatcher
     protected String _configurationFile;
 
     @Inject
-    public DefaultSecDispatcher(final PlexusCipher _cipher,
-                                final Map<String, PasswordDecryptor> _decryptors,
-                                @Named("${_configurationFile:-" + DEFAULT_CONFIGURATION + "}")
-                                final String _configurationFile)
+    public DefaultSecDispatcher( final PlexusCipher _cipher,
+                                 final Map<String, PasswordDecryptor> _decryptors,
+                                 @Named( "${_configurationFile:-" + DEFAULT_CONFIGURATION + "}" )
+                                 final String _configurationFile )
     {
         this._cipher = _cipher;
         this._decryptors = _decryptors;
@@ -76,8 +76,8 @@ public class DefaultSecDispatcher
     /**
      * Ctor to be used in tests and other simplified cases (no decryptors and config).
      */
-    public DefaultSecDispatcher(final PlexusCipher _cipher) {
-        this(_cipher, new HashMap<String, PasswordDecryptor>(), DEFAULT_CONFIGURATION);
+    public DefaultSecDispatcher( final PlexusCipher _cipher ) {
+        this( _cipher, new HashMap<String, PasswordDecryptor>(), DEFAULT_CONFIGURATION );
     }
 
     // ---------------------------------------------------------------
@@ -270,18 +270,20 @@ public class DefaultSecDispatcher
     {
         if( values != null )
         {
-            for (String item : values) {
-                String p = System.getProperty(item);
+            for ( String item : values ) {
+                String p = System.getProperty( item );
 
-                if (p != null)
+                if ( p != null ) {
                     return true;
+                }
             }
         
             if( av != null )
-                for (String value : values)
-                    for (String s : av) {
-                        if (("--" + value).equals(s))
+                for ( String value : values )
+                    for ( String s : av ) {
+                        if ( ( "--" + value ).equals( s ) ) {
                             return true;
+                        }
                     }
         }
         
@@ -290,7 +292,7 @@ public class DefaultSecDispatcher
     
     private static void usage()
     {
-        System.out.println("usage: java -jar ...jar [-m|-p]\n-m: encrypt master password\n-p: encrypt password");
+        System.out.println( "usage: java -jar ...jar [-m|-p]\n-m: encrypt master password\n-p: encrypt password" );
     }
 
     //---------------------------------------------------------------
@@ -331,7 +333,7 @@ public class DefaultSecDispatcher
         System.out.println("\n");
         
         DefaultPlexusCipher dc = new DefaultPlexusCipher();
-        DefaultSecDispatcher dd = new DefaultSecDispatcher(dc);
+        DefaultSecDispatcher dd = new DefaultSecDispatcher( dc );
 
         if( showMaster )
             System.out.println( dc.encryptAndDecorate( pass, DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION ) );
