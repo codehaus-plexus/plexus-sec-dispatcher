@@ -16,16 +16,16 @@ package org.sonatype.plexus.components.sec.dispatcher;
 import java.io.FileWriter;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
 import org.sonatype.plexus.components.sec.dispatcher.model.Config;
 import org.sonatype.plexus.components.sec.dispatcher.model.ConfigProperty;
 import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
 import org.sonatype.plexus.components.sec.dispatcher.model.io.xpp3.SecurityConfigurationXpp3Writer;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  *
@@ -47,7 +47,7 @@ public class SecUtilTest {
 
     String _propVal = "pval";
 
-    @Before
+    @BeforeEach
     public void prepare() throws Exception {
         System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION, "./target/sec.xml");
 
@@ -76,7 +76,7 @@ public class SecUtilTest {
     }
 
     @Test
-    public void testRead() throws Exception {
+    void testRead() throws Exception {
         SettingsSecurity sec = SecUtil.read("./target/sec.xml", true);
 
         assertNotNull(sec);
@@ -93,7 +93,7 @@ public class SecUtilTest {
     }
 
     @Test
-    public void testDecrypt() throws Exception {
+    void testDecrypt() throws Exception {
         DefaultSecDispatcher sd = new DefaultSecDispatcher(new DefaultPlexusCipher());
 
         String pass = sd.decrypt(_encrypted);
