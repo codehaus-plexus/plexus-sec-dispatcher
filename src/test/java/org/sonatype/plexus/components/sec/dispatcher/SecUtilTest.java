@@ -92,7 +92,7 @@ public class SecUtilTest
 
         assertEquals( _pw, sec.getMaster() );
         
-        Map conf = SecUtil.getConfig( sec, _confName );
+        Map<String, String> conf = SecUtil.getConfig( sec, _confName );
         
         assertNotNull( conf );
         

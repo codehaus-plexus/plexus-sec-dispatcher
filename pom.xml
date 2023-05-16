@@ -33,7 +33,7 @@
   </distributionManagement>
 
   <properties>
-    <javaVersion>7</javaVersion>
+    <javaVersion>8</javaVersion>
     <sisuVersion>0.3.5</sisuVersion>
   </properties>
 

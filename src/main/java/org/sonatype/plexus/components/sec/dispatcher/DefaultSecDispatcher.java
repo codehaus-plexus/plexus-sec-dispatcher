@@ -77,7 +77,7 @@ public class DefaultSecDispatcher
      * Ctor to be used in tests and other simplified cases (no decryptors and config).
      */
     public DefaultSecDispatcher( final PlexusCipher _cipher ) {
-        this( _cipher, new HashMap<String, PasswordDecryptor>(), DEFAULT_CONFIGURATION );
+        this( _cipher, new HashMap<>(), DEFAULT_CONFIGURATION );
     }
 
     // ---------------------------------------------------------------

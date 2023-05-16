@@ -13,10 +13,11 @@
  
 package org.sonatype.plexus.components.sec.dispatcher;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,17 +46,15 @@ public class SecUtil
     {
         if( location == null )
             throw new SecDispatcherException("location to read from is null");
-        
-        InputStream in = null;
+
+        SettingsSecurity sec;
         
         try
         {
-            in = toStream( location );
-            
-            SettingsSecurity sec = new SecurityConfigurationXpp3Reader().read( in );
-            
-            in.close();
-            
+            try (InputStream in = toStream( location )) {
+                sec = new SecurityConfigurationXpp3Reader().read(in);
+            }
+
             if( cycle && sec.getRelocation() != null )
                 return read( sec.getRelocation(), true );
             
@@ -64,11 +63,6 @@ public class SecUtil
         catch ( Exception e )
         {
             throw new SecDispatcherException(e);
-        }
-        finally
-        {
-            if( in != null )
-                try { in.close(); } catch( Exception e ) {}
         }
     }
     //---------------------------------------------------------------------------------------------------------------
@@ -92,7 +86,7 @@ public class SecUtil
           }
       }
 
-      return new FileInputStream( resource );
+      return Files.newInputStream(Paths.get(resource));
     }
     //---------------------------------------------------------------------------------------------------------------
     public static Map<String, String> getConfig( SettingsSecurity sec, String name )
