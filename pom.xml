@@ -33,8 +33,7 @@
   </distributionManagement>
 
   <properties>
-    <javaVersion>8</javaVersion>
-    <sisuVersion>0.3.5</sisuVersion>
+    <project.build.outputTimestamp>2023-05-22T22:22:22Z</project.build.outputTimestamp>
   </properties>
 
   <dependencies>
@@ -55,12 +54,6 @@
       <version>1</version>
     </dependency>
     <dependency>
-      <groupId>org.eclipse.sisu</groupId>
-      <artifactId>org.eclipse.sisu.inject</artifactId>
-      <version>${sisuVersion}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
@@ -72,7 +65,7 @@
       <plugin>
         <groupId>org.eclipse.sisu</groupId>
         <artifactId>sisu-maven-plugin</artifactId>
-        <version>${sisuVersion}</version>
+        <version>0.3.5</version>
         <executions>
           <execution>
             <goals>
@@ -91,7 +84,6 @@
           <models>
             <model>src/main/mdo/settings-security.mdo</model>
           </models>
-          <useJava5>true</useJava5>
         </configuration>
         <executions>
           <execution>
