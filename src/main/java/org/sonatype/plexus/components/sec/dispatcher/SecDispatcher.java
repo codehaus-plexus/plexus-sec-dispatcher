@@ -10,26 +10,25 @@
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
- 
+
 package org.sonatype.plexus.components.sec.dispatcher;
 
 /**
  * This component decrypts a string, passed to it
- * 
+ *
  * @author Oleg Gusakov
  */
-public interface SecDispatcher
-{
-    String [] SYSTEM_PROPERTY_MASTER_PASSWORD = new String [] {"settings.master.password","settings-master-password"};
-    
-    String [] SYSTEM_PROPERTY_SERVER_PASSWORD = new String [] {"settings.server.password","settings-server-password"};
+public interface SecDispatcher {
+    String[] SYSTEM_PROPERTY_MASTER_PASSWORD = new String[] {"settings.master.password", "settings-master-password"};
+
+    String[] SYSTEM_PROPERTY_SERVER_PASSWORD = new String[] {"settings.server.password", "settings-server-password"};
 
     /**
      * decrypt given encrypted string
-     * 
+     *
      * @param str
      * @return decrypted string
      * @throws SecDispatcherException
      */
-    String decrypt( String str ) throws SecDispatcherException;
+    String decrypt(String str) throws SecDispatcherException;
 }
