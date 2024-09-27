@@ -55,7 +55,7 @@ public class SecUtil {
 
             return sec;
         } catch (Exception e) {
-            throw new SecDispatcherException(e);
+            throw new SecDispatcherException(e.getMessage(), e);
         }
     }
     // ---------------------------------------------------------------------------------------------------------------

@@ -86,11 +86,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
         try {
             bare = _cipher.unDecorate(str);
-        } catch (PlexusCipherException e1) {
-            throw new SecDispatcherException(e1);
-        }
 
-        try {
             Map<String, String> attr = stripAttributes(bare);
 
             String res;
@@ -114,21 +110,19 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for hint " + type);
 
-                String pass = attr == null ? bare : strip(bare);
+                String pass = strip(bare);
 
                 return dispatcher.decrypt(pass, attr, conf);
             }
 
             return res;
-        } catch (Exception e) {
-            throw new SecDispatcherException(e);
+        } catch (PlexusCipherException e) {
+            throw new SecDispatcherException(e.getMessage(), e);
         }
     }
 
     private String strip(String str) {
         int pos = str.indexOf(ATTR_STOP);
-
-        if (pos == str.length()) return null;
 
         if (pos != -1) return str.substring(pos + 1);
 
@@ -143,7 +137,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
             String attrs = str.substring(start + 1, stop).trim();
 
-            if (attrs.length() < 1) return null;
+            if (attrs.isEmpty()) return null;
 
             Map<String, String> res = null;
 
@@ -159,11 +153,6 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 if (pos == -1) continue;
 
                 String key = pair.substring(0, pos).trim();
-
-                if (pos == pair.length()) {
-                    res.put(key, null);
-                    continue;
-                }
 
                 String val = pair.substring(pos + 1);
 
@@ -210,7 +199,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         try {
             return _cipher.decryptDecorated(master, SYSTEM_PROPERTY_SEC_LOCATION);
         } catch (PlexusCipherException e) {
-            throw new SecDispatcherException(e);
+            throw new SecDispatcherException(e.getMessage(), e);
         }
     }
     // ---------------------------------------------------------------

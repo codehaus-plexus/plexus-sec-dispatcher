@@ -13,7 +13,8 @@
  */
 -->
 
-<model>
+<model xml.namespace="http://codehaus-plexus.github.io/plexus-sec-dispatcher/${version}"
+       xml.schemaLocation="https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-${version}.xsd">
   <id>settings-security</id>
   
   <name>SecurityConfiguration</name>
@@ -30,26 +31,26 @@
 
     <class rootElement="true">
       <name>SettingsSecurity</name>
-      <version>1.0.0</version>
+      <version>1.0.0+</version>
       <fields>
 
         <field>
           <name>master</name>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <type>String</type>
           <description>encrypted master password</description>
         </field>
 
         <field>
           <name>relocation</name>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <type>String</type>
           <description>reference to the location of the security file</description>
         </field>
 
         <field>
           <name>configurations</name>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <description>named configurations</description>
           <association>
             <type>Config</type>
@@ -62,7 +63,7 @@
 
     <class>
       <name>Config</name>
-      <version>1.0.0</version>
+      <version>1.0.0+</version>
       <description>Named configuration</description>
       <fields>
       
@@ -70,13 +71,13 @@
           <name>name</name>
           <type>String</type>
           <required>true</required>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <description>name of this configuration</description>
         </field>
 
         <field>
           <name>properties</name>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <description>properties</description>
           <association>
             <type>ConfigProperty</type>
@@ -89,7 +90,7 @@
 
     <class>
       <name>ConfigProperty</name>
-      <version>1.0.0</version>
+      <version>1.0.0+</version>
       <description>generic property - name/value pair</description>
       
       <fields>
@@ -98,7 +99,7 @@
           <name>name</name>
           <type>String</type>
           <required>true</required>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <description>name of this property</description>
         </field>
 
@@ -106,7 +107,7 @@
           <name>value</name>
           <type>String</type>
           <required>true</required>
-          <version>1.0.0</version>
+          <version>1.0.0+</version>
           <description>value of this property</description>
         </field>
         

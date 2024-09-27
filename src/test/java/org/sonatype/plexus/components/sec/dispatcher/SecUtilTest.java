@@ -35,11 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  *
  */
 public class SecUtilTest {
-    String _pw = "{1wQaa6S/o8MH7FnaTNL53XmhT5O0SEGXQi3gC49o6OY=}";
-
-    String _clear = "testtest";
-
-    String _encrypted = "{BteqUEnqHecHM7MZfnj9FwLcYbdInWxou1C929Txa0A=}";
+    String masterPassword = "masterPw";
+    String masterPasswordEncrypted = "{zKIp99JSqcMP383jVX4zaomd8/gXhXxY0k1ZTKgIY81yzWesjdM0SZPnlI9fEJYp}";
+    String password = "somePassword";
+    String passwordEncrypted = "{Gfsw+RhB7REL9DE4+T73MdNRbF8zHW4Dt3YbhooZVVJVa70IjqGFz9hXOs7AH1Hi}";
 
     String _confName = "cname";
 
@@ -60,7 +59,7 @@ public class SecUtilTest {
         new SecurityConfigurationXpp3Writer().write(new FileWriter("./target/sec.xml"), sec);
 
         sec.setRelocation(null);
-        sec.setMaster(_pw);
+        sec.setMaster(masterPasswordEncrypted);
 
         ConfigProperty cp = new ConfigProperty();
         cp.setName(_propName);
@@ -81,7 +80,7 @@ public class SecUtilTest {
 
         assertNotNull(sec);
 
-        assertEquals(_pw, sec.getMaster());
+        assertEquals(masterPasswordEncrypted, sec.getMaster());
 
         Map<String, String> conf = SecUtil.getConfig(sec, _confName);
 
@@ -96,10 +95,10 @@ public class SecUtilTest {
     void testDecrypt() throws Exception {
         DefaultSecDispatcher sd = new DefaultSecDispatcher(new DefaultPlexusCipher());
 
-        String pass = sd.decrypt(_encrypted);
+        String pass = sd.decrypt(masterPasswordEncrypted);
 
         assertNotNull(pass);
 
-        assertEquals(_clear, pass);
+        assertEquals(masterPassword, pass);
     }
 }

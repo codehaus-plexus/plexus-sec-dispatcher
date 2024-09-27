@@ -33,5 +33,5 @@ public interface PasswordDecryptor {
      *
      * @throws SecDispatcherException
      */
-    String decrypt(String str, Map attributes, Map config) throws SecDispatcherException;
+    String decrypt(String str, Map<String, String> attributes, Map<String, String> config) throws SecDispatcherException;
 }

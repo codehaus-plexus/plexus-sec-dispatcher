@@ -13,15 +13,10 @@
 
 package org.sonatype.plexus.components.sec.dispatcher;
 
-public class SecDispatcherException extends Exception {
+public class SecDispatcherException extends RuntimeException {
     public SecDispatcherException(String message) {
         super(message);
     }
-
-    public SecDispatcherException(Throwable cause) {
-        super(cause);
-    }
-
     public SecDispatcherException(String message, Throwable cause) {
         super(message, cause);
     }
