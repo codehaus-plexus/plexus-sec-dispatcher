@@ -74,7 +74,7 @@ public class SecUtilTest {
 
     @BeforeEach
     public void prepare() throws Exception {
-        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION, "./target/sec.xml");
+        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
 
         SettingsSecurity sec = new SettingsSecurity();
 

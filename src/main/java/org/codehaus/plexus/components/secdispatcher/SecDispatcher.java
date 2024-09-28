@@ -19,6 +19,9 @@ package org.codehaus.plexus.components.secdispatcher;
  * @author Oleg Gusakov
  */
 public interface SecDispatcher {
+    String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
+    String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
+
     /**
      * decrypt given encrypted string
      *

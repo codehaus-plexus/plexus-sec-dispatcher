@@ -17,18 +17,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
-import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
@@ -41,10 +37,6 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 @Named
 public class DefaultSecDispatcher implements SecDispatcher {
-    public static final String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
-
-    public static final String SYSTEM_PROPERTY_SEC_LOCATION = "settings.security";
-
     public static final String TYPE_ATTR = "type";
     public static final char ATTR_START = '[';
     public static final char ATTR_STOP = ']';
@@ -166,7 +158,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     // ----------------------------------------------------------------------------
 
     private SettingsSecurity getSec() throws SecDispatcherException {
-        String location = System.getProperty(SYSTEM_PROPERTY_SEC_LOCATION, getConfigurationFile());
+        String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
         String realLocation =
                 location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
 
@@ -225,54 +217,5 @@ public class DefaultSecDispatcher implements SecDispatcher {
         }
 
         return false;
-    }
-
-    private static void usage() {
-        System.out.println("usage: java -jar ...jar [-m|-p]\n-m: encrypt master password\n-p: encrypt password");
-    }
-
-    // ---------------------------------------------------------------
-
-    private static final String[] SYSTEM_PROPERTY_MASTER_PASSWORD =
-            new String[] {"settings.master.password", "settings-master-password"};
-
-    private static final String[] SYSTEM_PROPERTY_SERVER_PASSWORD =
-            new String[] {"settings.server.password", "settings-server-password"};
-
-    public static void main(String[] args) throws Exception {
-        if (args == null || args.length < 1) {
-            usage();
-            return;
-        }
-
-        if ("-m".equals(args[0]) || propertyExists(SYSTEM_PROPERTY_MASTER_PASSWORD, args)) show(true);
-        else if ("-p".equals(args[0]) || propertyExists(SYSTEM_PROPERTY_SERVER_PASSWORD, args)) show(false);
-        else usage();
-    }
-
-    // ---------------------------------------------------------------
-
-    private static void show(boolean showMaster) throws Exception {
-        if (showMaster) System.out.print("\nsettings master password\n");
-        else System.out.print("\nsettings server password\n");
-
-        System.out.print("enter password: ");
-
-        BufferedReader r = new BufferedReader(new InputStreamReader(System.in));
-
-        String pass = r.readLine();
-
-        System.out.println("\n");
-
-        DefaultPlexusCipher dc = new DefaultPlexusCipher();
-        DefaultSecDispatcher dd =
-                new DefaultSecDispatcher(dc, Collections.emptyMap(), Collections.emptyMap(), DEFAULT_CONFIGURATION);
-
-        if (showMaster)
-            System.out.println(dc.encryptAndDecorate(pass, DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION));
-        else {
-            SettingsSecurity sec = dd.getSec();
-            System.out.println(dc.encryptAndDecorate(pass, dd.getMaster(sec)));
-        }
     }
 }
