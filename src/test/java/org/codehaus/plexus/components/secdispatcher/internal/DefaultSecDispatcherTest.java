@@ -13,8 +13,10 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import java.io.FileWriter;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
@@ -49,9 +51,8 @@ public class DefaultSecDispatcherTest {
         sec.setMasterSource(masterSource);
         sec.setMasterCipher(AESGCMNoPadding.CIPHER_ALG);
 
-        try (FileWriter fw = new FileWriter("./target/sec.xml")) {
-            new SecurityConfigurationStaxWriter().write(fw, sec);
-            fw.flush();
+        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
+            new SecurityConfigurationStaxWriter().write(fos, sec);
         }
         System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
     }
