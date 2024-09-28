@@ -167,8 +167,8 @@ public class DefaultSecDispatcherTest {
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         assertEquals(Set.of("magic"), sd.availableDispatchers());
-        String pass = sd.decrypt("{" + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8))
-                + "[a=b," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]}");
+        String pass = sd.decrypt("{" + "[a=b," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]"
+                + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8)) + "}");
         assertNotNull(pass);
         assertEquals("decrypted", pass);
     }

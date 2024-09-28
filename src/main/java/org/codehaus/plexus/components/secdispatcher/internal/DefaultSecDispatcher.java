@@ -76,13 +76,13 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
-                res = dispatcher.encrypt(str, attr, conf);
-                res += ATTR_START
+                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
+                res = ATTR_START
                         + attr.entrySet().stream()
                                 .map(e -> e.getKey() + "=" + e.getValue())
                                 .collect(Collectors.joining(","))
                         + ATTR_STOP;
+                res += dispatcher.encrypt(str, attr, conf);
             }
             return cipher.decorate(res);
         } catch (PlexusCipherException e) {
@@ -104,7 +104,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
+                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
                 String pass = strip(bare);
                 return dispatcher.decrypt(pass, attr, conf);
             }
@@ -114,8 +114,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     private String strip(String str) {
-        int pos = str.indexOf(ATTR_STOP);
-        if (pos != -1) return str.substring(pos + 1);
+        int start = str.indexOf(ATTR_START);
+        int stop = str.indexOf(ATTR_STOP);
+        if (start != -1 && stop != -1 && stop > start) {
+            return str.substring(stop + 1);
+        }
         return str;
     }
 
@@ -123,6 +126,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
+            if (start != 0) throw new SecDispatcherException("Attributes can be prefix only");
             if (stop == start + 1) return null;
 
             String attrs = str.substring(start + 1, stop).trim();
@@ -155,14 +159,10 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return null;
     }
 
-    // ----------------------------------------------------------------------------
-
     private boolean isEncryptedString(String str) {
         if (str == null) return false;
         return cipher.isEncryptedString(str);
     }
-
-    // ----------------------------------------------------------------------------
 
     private SettingsSecurity getSec() throws SecDispatcherException {
         String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
