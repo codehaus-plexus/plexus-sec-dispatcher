@@ -19,6 +19,7 @@ import javax.inject.Singleton;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
@@ -56,7 +57,10 @@ public class DefaultSecDispatcher implements SecDispatcher {
         this.configurationFile = requireNonNull(configurationFile);
     }
 
-    // ---------------------------------------------------------------
+    @Override
+    public Set<String> availableDispatchers() {
+        return Set.copyOf(dispatchers.keySet());
+    }
 
     @Override
     public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException {

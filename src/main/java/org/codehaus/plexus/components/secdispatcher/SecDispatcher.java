@@ -14,6 +14,7 @@
 package org.codehaus.plexus.components.secdispatcher;
 
 import java.util.Map;
+import java.util.Set;
 
 /**
  * This component decrypts a string, passed to it
@@ -23,7 +24,12 @@ import java.util.Map;
 public interface SecDispatcher {
     String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
     String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
-    String DISPATCHER_NAME_ATTR = "dispatcher.name";
+    String DISPATCHER_NAME_ATTR = "name";
+
+    /**
+     * Returns the set of available dispatcher names, never {@code null}.
+     */
+    Set<String> availableDispatchers();
 
     /**
      * encrypt given plaintext string
