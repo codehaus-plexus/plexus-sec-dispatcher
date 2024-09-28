@@ -48,6 +48,11 @@ public interface SecDispatcher {
     Set<String> availableDispatchers();
 
     /**
+     * Returns the set of available ciphers, never {@code null}.
+     */
+    Set<String> availableCiphers();
+
+    /**
      * encrypt given plaintext string
      *
      * @param str the plaintext to encrypt

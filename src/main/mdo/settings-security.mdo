@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 /**
  * Copyright (c) 2008 Sonatype, Inc. All rights reserved.
@@ -12,9 +13,11 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 -->
+<model xmlns="http://codehaus-plexus.github.io/MODELLO/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://codehaus-plexus.github.io/MODELLO/2.0.0 https://codehaus-plexus.github.io/modello/xsd/modello-2.0.0.xsd"
+  xml.namespace="http://codehaus-plexus.github.io/plexus-sec-dispatcher/${version}"
+  xml.schemaLocation="https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-${version}.xsd">
 
-<model xml.namespace="http://codehaus-plexus.github.io/plexus-sec-dispatcher/${version}"
-       xml.schemaLocation="https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-${version}.xsd">
   <id>settings-security</id>
   
   <name>SecurityConfiguration</name>
@@ -45,6 +48,7 @@
           <name>modelVersion</name>
           <version>3.0.0+</version>
           <type>String</type>
+          <required>true</required>
           <description>The version of the model</description>
         </field>
 
@@ -52,6 +56,7 @@
           <name>masterSource</name>
           <version>3.0.0+</version>
           <type>String</type>
+          <required>true</required>
           <description>The URI describing the source of the master password</description>
         </field>
 
@@ -59,6 +64,7 @@
           <name>masterCipher</name>
           <version>3.0.0+</version>
           <type>String</type>
+          <required>true</required>
           <description>The Cipher to be used</description>
         </field>
 
@@ -66,6 +72,7 @@
           <name>relocation</name>
           <version>1.0.0+</version>
           <type>String</type>
+          <required>false</required>
           <description>reference to the location of the security file</description>
         </field>
 
@@ -73,6 +80,7 @@
           <name>configurations</name>
           <version>1.0.0+</version>
           <description>named configurations</description>
+          <required>false</required>
           <association>
             <type>Config</type>
             <multiplicity>*</multiplicity>

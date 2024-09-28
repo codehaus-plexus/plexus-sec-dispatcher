@@ -63,6 +63,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     @Override
+    public Set<String> availableCiphers() {
+        return cipher.availableCiphers();
+    }
+
+    @Override
     public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException {
         if (isEncryptedString(str)) return str;
 
