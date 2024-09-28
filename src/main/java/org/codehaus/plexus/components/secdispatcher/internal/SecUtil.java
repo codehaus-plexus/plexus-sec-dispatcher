@@ -26,7 +26,7 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
-import org.codehaus.plexus.components.secdispatcher.model.io.xpp3.SecurityConfigurationXpp3Reader;
+import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxReader;
 
 /**
  *
@@ -49,7 +49,7 @@ public class SecUtil {
 
         try {
             try (InputStream in = toStream(location)) {
-                sec = new SecurityConfigurationXpp3Reader().read(in);
+                sec = new SecurityConfigurationStaxReader().read(in);
             }
 
             if (cycle && sec.getRelocation() != null) return read(sec.getRelocation(), true);

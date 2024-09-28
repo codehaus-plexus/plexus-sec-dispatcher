@@ -27,7 +27,7 @@ import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPrope
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
-import org.codehaus.plexus.components.secdispatcher.model.io.xpp3.SecurityConfigurationXpp3Writer;
+import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -69,7 +69,10 @@ public class SecUtilTest {
 
         sec.addConfiguration(conf);
 
-        new SecurityConfigurationXpp3Writer().write(new FileWriter("./target/sec1.xml"), sec);
+        try (FileWriter fw = new FileWriter("./target/sec1.xml")) {
+            new SecurityConfigurationStaxWriter().write(fw, sec);
+            fw.flush();
+        }
     }
 
     @BeforeEach
@@ -79,7 +82,10 @@ public class SecUtilTest {
         SettingsSecurity sec = new SettingsSecurity();
 
         sec.setRelocation("./target/sec1.xml");
-        new SecurityConfigurationXpp3Writer().write(new FileWriter("./target/sec.xml"), sec);
+        try (FileWriter fw = new FileWriter("./target/sec.xml")) {
+            new SecurityConfigurationStaxWriter().write(fw, sec);
+            fw.flush();
+        }
 
         saveSec("magic:mighty");
     }
