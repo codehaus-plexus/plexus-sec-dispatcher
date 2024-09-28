@@ -111,7 +111,7 @@ public final class SecUtil {
         Path tempFile = parent.resolve(target.getFileName() + "."
                 + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".tmp");
 
-        configuration.setModelVersion(SecDispatcher.class.getPackage().getImplementationVersion());
+        configuration.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         configuration.setModelEncoding(StandardCharsets.UTF_8.name());
 
         try (OutputStream out = Files.newOutputStream(tempFile)) {

@@ -120,7 +120,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public SettingsSecurity readConfiguration(boolean createIfMissing) throws IOException {
-        SettingsSecurity configuration = getConfiguration(false);
+        SettingsSecurity configuration = SecUtil.read(getConfigurationPath());
         if (configuration == null && createIfMissing) {
             configuration = new SettingsSecurity();
         }
