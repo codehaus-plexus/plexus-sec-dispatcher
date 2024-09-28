@@ -27,7 +27,8 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 public interface Dispatcher {
     /**
      * Configuration key for masterPassword. It may be present, if SecDispatcher could
-     * obtain it, but presence is not optional.
+     * obtain it, but presence is optional. Still, dispatcher may throw and fail the operation
+     * if it requires it.
      */
     String CONF_MASTER_PASSWORD = "masterPassword";
 
