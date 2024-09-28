@@ -41,6 +41,13 @@
           <description>encrypted master password</description>
         </field>
         <field>
+          <name>relocation</name>
+          <version>1.0.0/2.1.0</version>
+          <type>String</type>
+          <required>false</required>
+          <description>Relocates configuration to given reference. Reference if relative, will be resolved from the relocated configuration directory</description>
+        </field>
+        <field>
           <name>modelVersion</name>
           <version>3.0.0+</version>
           <type>String</type>
@@ -60,13 +67,6 @@
           <type>String</type>
           <required>true</required>
           <description>The Cipher to be used for master password</description>
-        </field>
-        <field>
-          <name>relocation</name>
-          <version>1.0.0+</version>
-          <type>String</type>
-          <required>false</required>
-          <description>Relocates configuration to given reference. Reference if relative, will be resolved from the relocated configuration directory</description>
         </field>
         <field>
           <name>configurations</name>

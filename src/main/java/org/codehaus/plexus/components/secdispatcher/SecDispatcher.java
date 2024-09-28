@@ -13,8 +13,11 @@
 
 package org.codehaus.plexus.components.secdispatcher;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+
+import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 
 /**
  * This component decrypts a string, passed to it
@@ -53,7 +56,7 @@ public interface SecDispatcher {
     Set<String> availableCiphers();
 
     /**
-     * encrypt given plaintext string
+     * Encrypt given plaintext string.
      *
      * @param str the plaintext to encrypt
      * @param attr the attributes, may be {@code null}
@@ -63,11 +66,28 @@ public interface SecDispatcher {
     String encrypt(String str, Map<String, String> attr) throws SecDispatcherException;
 
     /**
-     * decrypt given encrypted string
+     * Decrypt given encrypted string.
      *
      * @param str the encrypted string
-     * @return plaintext string
+     * @return decrypted string
      * @throws SecDispatcherException in case of problem
      */
     String decrypt(String str) throws SecDispatcherException;
+
+    /**
+     * Reads the effective configuration, eventually creating new instance if not present.
+     *
+     * @param createIfMissing If {@code true}, it will create a new empty instance
+     * @return the configuration, of {@code null} if it does not exist in {@code createIfMissing} is {@code false}
+     * @throws IOException In case of IO problem
+     */
+    SettingsSecurity readConfiguration(boolean createIfMissing) throws IOException;
+
+    /**
+     * Writes the effective configuration.
+     *
+     * @param configuration The configuration to write, may not be {@code null}
+     * @throws IOException In case of IO problem
+     */
+    void writeConfiguration(SettingsSecurity configuration) throws IOException;
 }

@@ -17,6 +17,8 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
@@ -116,6 +118,21 @@ public class DefaultSecDispatcher implements SecDispatcher {
         }
     }
 
+    @Override
+    public SettingsSecurity readConfiguration(boolean createIfMissing) throws IOException {
+        SettingsSecurity configuration = getConfiguration(false);
+        if (configuration == null && createIfMissing) {
+            configuration = new SettingsSecurity();
+        }
+        return configuration;
+    }
+
+    @Override
+    public void writeConfiguration(SettingsSecurity configuration) throws IOException {
+        requireNonNull(configuration, "configuration is null");
+        SecUtil.writeWithBackup(getConfigurationPath(), configuration);
+    }
+
     private Map<String, String> prepareDispatcherConfig(String type) {
         HashMap<String, String> dispatcherConf = new HashMap<>();
         SettingsSecurity sec = getConfiguration(false);
@@ -168,14 +185,22 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return cipher.isEncryptedString(str);
     }
 
-    private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
+    private Path getConfigurationPath() {
         String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
         location = location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
-        SettingsSecurity sec = SecUtil.read(Paths.get(location), true);
-        if (mandatory && sec == null)
-            throw new SecDispatcherException("Please check that configuration file on path " + location + " exists");
+        return Paths.get(location);
+    }
 
-        return sec;
+    private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
+        Path path = getConfigurationPath();
+        try {
+            SettingsSecurity sec = SecUtil.read(path);
+            if (mandatory && sec == null)
+                throw new SecDispatcherException("Please check that configuration file on path " + path + " exists");
+            return sec;
+        } catch (IOException e) {
+            throw new SecDispatcherException(e.getMessage(), e);
+        }
     }
 
     private String getMasterPassword(SettingsSecurity sec, boolean mandatory) throws SecDispatcherException {
