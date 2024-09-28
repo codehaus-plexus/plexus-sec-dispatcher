@@ -44,6 +44,8 @@ public class DefaultSecDispatcherTest {
 
     private void saveSec(String masterSource) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
+        sec.setModelEncoding(StandardCharsets.UTF_8.name());
+        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         sec.setMasterSource(masterSource);
         sec.setMasterCipher(AESGCMNoPadding.CIPHER_ALG);
 

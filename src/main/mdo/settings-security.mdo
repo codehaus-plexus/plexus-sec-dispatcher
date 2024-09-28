@@ -42,6 +42,13 @@
         </field>
 
         <field>
+          <name>modelVersion</name>
+          <version>3.0.0+</version>
+          <type>String</type>
+          <description>The version of the model</description>
+        </field>
+
+        <field>
           <name>masterSource</name>
           <version>3.0.0+</version>
           <type>String</type>
