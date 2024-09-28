@@ -14,11 +14,13 @@
 package org.codehaus.plexus.components.secdispatcher.internal;
 
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
@@ -51,6 +53,8 @@ public class SecUtilTest {
     private void saveSec(String path, String masterSource) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
 
+        sec.setModelEncoding(StandardCharsets.UTF_8.name());
+        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         sec.setRelocation(null);
         sec.setMasterSource(masterSource);
 
@@ -73,6 +77,8 @@ public class SecUtilTest {
     public void prepare() throws Exception {
         System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
         SettingsSecurity sec = new SettingsSecurity();
+        sec.setModelEncoding(StandardCharsets.UTF_8.name());
+        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         sec.setRelocation("sec1.xml");
         try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
             new SecurityConfigurationStaxWriter().write(fos, sec);
@@ -95,6 +101,8 @@ public class SecUtilTest {
     void testReadWithRelocationCycleSelf() throws Exception {
         Path sec1 = Paths.get("./target/sec-cycle-1.xml");
         SettingsSecurity s1 = new SettingsSecurity();
+        s1.setModelEncoding(StandardCharsets.UTF_8.name());
+        s1.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         s1.setRelocation("sec-cycle-1.xml");
         try (OutputStream fos = Files.newOutputStream(sec1)) {
             new SecurityConfigurationStaxWriter().write(fos, s1);
@@ -108,11 +116,15 @@ public class SecUtilTest {
         Path sec1 = Paths.get("./target/sec-cycle-1.xml");
         Path sec2 = Paths.get("./target/sec-cycle-2.xml");
         SettingsSecurity s1 = new SettingsSecurity();
+        s1.setModelEncoding(StandardCharsets.UTF_8.name());
+        s1.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         s1.setRelocation("sec-cycle-2.xml");
         try (OutputStream fos = Files.newOutputStream(sec1)) {
             new SecurityConfigurationStaxWriter().write(fos, s1);
         }
         SettingsSecurity s2 = new SettingsSecurity();
+        s2.setModelEncoding(StandardCharsets.UTF_8.name());
+        s2.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         s2.setRelocation("sec-cycle-1.xml");
         try (OutputStream fos = Files.newOutputStream(sec1)) {
             new SecurityConfigurationStaxWriter().write(fos, s2);
