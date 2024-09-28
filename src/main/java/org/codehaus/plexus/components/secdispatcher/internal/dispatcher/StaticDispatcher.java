@@ -11,20 +11,28 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.codehaus.plexus.components.secdispatcher.internal.decryptor;
+package org.codehaus.plexus.components.secdispatcher.internal.dispatcher;
 
 import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.PasswordDecryptor;
+import org.codehaus.plexus.components.secdispatcher.internal.Dispatcher;
 
 import static java.util.Objects.requireNonNull;
 
-public class StaticPasswordDecryptor implements PasswordDecryptor {
+public class StaticDispatcher implements Dispatcher {
     private final String decrypted;
+    private final String encrypted;
 
-    public StaticPasswordDecryptor(String decrypted) {
+    public StaticDispatcher(String decrypted, String encrypted) {
         this.decrypted = requireNonNull(decrypted);
+        this.encrypted = requireNonNull(encrypted);
+    }
+
+    @Override
+    public String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
+            throws SecDispatcherException {
+        return encrypted;
     }
 
     @Override

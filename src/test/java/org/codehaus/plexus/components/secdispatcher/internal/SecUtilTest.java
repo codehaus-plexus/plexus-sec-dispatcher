@@ -19,7 +19,7 @@ import java.util.Base64;
 import java.util.Map;
 
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
-import org.codehaus.plexus.components.secdispatcher.internal.decryptor.StaticPasswordDecryptor;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatcher.StaticDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterPasswordSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterPasswordSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.StaticMasterPasswordSource;
@@ -45,7 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 public class SecUtilTest {
     String masterPassword = "masterPw";
     String password = "somePassword";
-    String passwordEncrypted = "{a/8OtPCGPvQLUVF+n6+UDTD3SeRCdqb0tPJLF71cs29M9Ms81MAb3Y1XG/TS4C4f}";
+    String passwordEncrypted = "{TT2NQZ4iAdoHqsSfYUab3s6X2IHl5qaf4vx/F8DvtSI=}";
 
     String _confName = "cname";
 
@@ -99,6 +99,20 @@ public class SecUtilTest {
         assertNotNull(conf.get(_propName));
 
         assertEquals(_propVal, conf.get(_propName));
+    }
+
+    @Test
+    void testEncrypt() throws Exception {
+        DefaultSecDispatcher sd = new DefaultSecDispatcher(
+                new DefaultPlexusCipher(),
+                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
+                Map.of(),
+                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+
+        String enc = sd.encrypt(password, null);
+        assertNotNull(enc);
+        String password1 = sd.decrypt(enc);
+        assertEquals(password, password1);
     }
 
     @Test
@@ -187,11 +201,26 @@ public class SecUtilTest {
     }
 
     @Test
-    void testDecryptWithDecryptor() throws Exception {
+    void testEncryptWithDispatcher() throws Exception {
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(),
                 Map.of("static", new StaticMasterPasswordSource(masterPassword)),
-                Map.of("magic", new StaticPasswordDecryptor("magic")),
+                Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
+                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+
+        String enc = sd.encrypt("whatever", Map.of("type", "magic", "a", "b"));
+        assertNotNull(enc);
+        System.out.println(enc);
+        String password1 = sd.decrypt(enc);
+        assertEquals("decrypted", password1);
+    }
+
+    @Test
+    void testDecryptWithDispatcher() throws Exception {
+        DefaultSecDispatcher sd = new DefaultSecDispatcher(
+                new DefaultPlexusCipher(),
+                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
+                Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         String pass = sd.decrypt("{" + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8))
@@ -199,6 +228,6 @@ public class SecUtilTest {
 
         assertNotNull(pass);
 
-        assertEquals("magic", pass);
+        assertEquals("decrypted", pass);
     }
 }

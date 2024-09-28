@@ -13,6 +13,8 @@
 
 package org.codehaus.plexus.components.secdispatcher;
 
+import java.util.Map;
+
 /**
  * This component decrypts a string, passed to it
  *
@@ -21,13 +23,24 @@ package org.codehaus.plexus.components.secdispatcher;
 public interface SecDispatcher {
     String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
     String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
+    String TYPE_ATTR = "type";
+
+    /**
+     * encrypt given plaintext string
+     *
+     * @param str the plaintext to encrypt
+     * @param attr the attributes, may be {@code null}
+     * @return encrypted string
+     * @throws SecDispatcherException in case of problem
+     */
+    String encrypt(String str, Map<String, String> attr) throws SecDispatcherException;
 
     /**
      * decrypt given encrypted string
      *
-     * @param str
-     * @return decrypted string
-     * @throws SecDispatcherException
+     * @param str the encrypted string
+     * @return plaintext string
+     * @throws SecDispatcherException in case of problem
      */
     String decrypt(String str) throws SecDispatcherException;
 }

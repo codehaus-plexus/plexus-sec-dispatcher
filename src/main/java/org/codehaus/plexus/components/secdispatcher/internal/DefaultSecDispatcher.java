@@ -22,6 +22,7 @@ import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
@@ -37,67 +38,74 @@ import static java.util.Objects.requireNonNull;
 @Singleton
 @Named
 public class DefaultSecDispatcher implements SecDispatcher {
-    public static final String TYPE_ATTR = "type";
-    public static final char ATTR_START = '[';
-    public static final char ATTR_STOP = ']';
+    public static final String ATTR_START = "[";
+    public static final String ATTR_STOP = "]";
 
     protected final PlexusCipher cipher;
     protected final Map<String, MasterPasswordSource> masterPasswordSources;
-    protected final Map<String, PasswordDecryptor> decryptors;
-    protected String configurationFile;
+    protected final Map<String, Dispatcher> dispatchers;
+    protected final String configurationFile;
 
     @Inject
     public DefaultSecDispatcher(
             PlexusCipher cipher,
             Map<String, MasterPasswordSource> masterPasswordSources,
-            Map<String, PasswordDecryptor> decryptors,
+            Map<String, Dispatcher> dispatchers,
             @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
-        this.cipher = cipher;
-        this.masterPasswordSources = masterPasswordSources;
-        this.decryptors = decryptors;
-        this.configurationFile = configurationFile;
+        this.cipher = requireNonNull(cipher);
+        this.masterPasswordSources = requireNonNull(masterPasswordSources);
+        this.dispatchers = requireNonNull(dispatchers);
+        this.configurationFile = requireNonNull(configurationFile);
     }
 
     // ---------------------------------------------------------------
 
     @Override
-    public String decrypt(String str) throws SecDispatcherException {
-        if (!isEncryptedString(str)) return str;
-
-        String bare;
+    public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException {
+        if (isEncryptedString(str)) return str;
 
         try {
-            bare = cipher.unDecorate(str);
-
-            Map<String, String> attr = stripAttributes(bare);
-
             String res;
-
             SettingsSecurity sec = getSec();
-
-            if (attr == null || attr.get("type") == null) {
+            if (attr == null || attr.get(TYPE_ATTR) == null) {
                 String master = getMaster(sec);
-
-                res = cipher.decrypt(bare, master);
+                res = cipher.encrypt(str, master);
             } else {
                 String type = attr.get(TYPE_ATTR);
-
-                if (decryptors == null)
-                    throw new SecDispatcherException(
-                            "plexus container did not supply any required dispatchers - cannot lookup " + type);
-
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
+                Dispatcher dispatcher = dispatchers.get(type);
+                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
+                res = dispatcher.encrypt(str, attr, conf);
+                res += ATTR_START
+                        + attr.entrySet().stream()
+                                .map(e -> e.getKey() + "=" + e.getValue())
+                                .collect(Collectors.joining(","))
+                        + ATTR_STOP;
+            }
+            return cipher.decorate(res);
+        } catch (PlexusCipherException e) {
+            throw new SecDispatcherException(e.getMessage(), e);
+        }
+    }
 
-                PasswordDecryptor dispatcher = decryptors.get(type);
-
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for hint " + type);
-
+    @Override
+    public String decrypt(String str) throws SecDispatcherException {
+        if (!isEncryptedString(str)) return str;
+        try {
+            String bare = cipher.unDecorate(str);
+            Map<String, String> attr = stripAttributes(bare);
+            SettingsSecurity sec = getSec();
+            if (attr == null || attr.get(TYPE_ATTR) == null) {
+                String master = getMaster(sec);
+                return cipher.decrypt(bare, master);
+            } else {
+                String type = attr.get(TYPE_ATTR);
+                Map<String, String> conf = SecUtil.getConfig(sec, type);
+                Dispatcher dispatcher = dispatchers.get(type);
+                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
                 String pass = strip(bare);
-
                 return dispatcher.decrypt(pass, attr, conf);
             }
-
-            return res;
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
@@ -105,9 +113,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     private String strip(String str) {
         int pos = str.indexOf(ATTR_STOP);
-
         if (pos != -1) return str.substring(pos + 1);
-
         return str;
     }
 
@@ -151,7 +157,6 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     private boolean isEncryptedString(String str) {
         if (str == null) return false;
-
         return cipher.isEncryptedString(str);
     }
 
@@ -171,8 +176,6 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return sec;
     }
 
-    // ----------------------------------------------------------------------------
-
     private String getMaster(SettingsSecurity sec) throws SecDispatcherException {
         String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
         try {
@@ -186,36 +189,8 @@ public class DefaultSecDispatcher implements SecDispatcher {
         }
         throw new SecDispatcherException("master password could not be fetched");
     }
-    // ---------------------------------------------------------------
+
     public String getConfigurationFile() {
         return configurationFile;
-    }
-
-    public void setConfigurationFile(String file) {
-        configurationFile = file;
-    }
-
-    // ---------------------------------------------------------------
-
-    private static boolean propertyExists(String[] values, String[] av) {
-        if (values != null) {
-            for (String item : values) {
-                String p = System.getProperty(item);
-
-                if (p != null) {
-                    return true;
-                }
-            }
-
-            if (av != null)
-                for (String value : values)
-                    for (String s : av) {
-                        if (("--" + value).equals(s)) {
-                            return true;
-                        }
-                    }
-        }
-
-        return false;
     }
 }

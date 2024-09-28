@@ -18,22 +18,31 @@ import java.util.Map;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
- *
+ * Dispatcher.
  *
  * @author Oleg Gusakov
  * @version $Id$
  *
  */
-public interface PasswordDecryptor {
+public interface Dispatcher {
+    /**
+     * encrypt given plaintext string
+     *
+     * @param str string to encrypt
+     * @param attributes attributes, never {@code null}
+     * @param config configuration from settings-security.xml, may be {@code null}
+     * @return encrypted string
+     */
+    String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
+            throws SecDispatcherException;
+
     /**
      * decrypt given encrypted string
      *
-     * @param str - string to decrypt
-     * @param attributes - string attributes
-     * @param config - configuration from settings-security.xml, if any
+     * @param str string to decrypt
+     * @param attributes attributes, never {@code null}
+     * @param config configuration from settings-security.xml, may be {@code null}
      * @return decrypted string
-     *
-     * @throws SecDispatcherException
      */
     String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException;
