@@ -39,9 +39,9 @@ public final class EnvMasterPasswordSource implements MasterPasswordSource {
         if (!NAME.equals(uri.getScheme())) {
             return null;
         }
-        String value = System.getenv(uri.getSchemeSpecificPart());
+        String value = System.getenv(uri.getPath().substring(1));
         if (value == null) {
-            throw new SecDispatcherException("Environment variable '" + uri.getSchemeSpecificPart() + "' not found");
+            throw new SecDispatcherException("Environment variable '" + uri.getPath() + "' not found");
         }
         return value;
     }

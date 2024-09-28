@@ -39,9 +39,9 @@ public final class SystemPropertyMasterPasswordSource implements MasterPasswordS
         if (!NAME.equals(uri.getScheme())) {
             return null;
         }
-        String value = System.getProperty(uri.getSchemeSpecificPart());
+        String value = System.getProperty(uri.getPath().substring(1));
         if (value == null) {
-            throw new SecDispatcherException("System property '" + uri.getSchemeSpecificPart() + "' not found");
+            throw new SecDispatcherException("System property '" + uri.getPath() + "' not found");
         }
         return value;
     }

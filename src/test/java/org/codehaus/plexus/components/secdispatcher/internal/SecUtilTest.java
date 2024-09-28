@@ -106,7 +106,7 @@ public class SecUtilTest {
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(),
                 Map.of("static", new StaticMasterPasswordSource(masterPassword)),
-                Map.of("magic", new StaticPasswordDecryptor("magic")),
+                Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         String pass = sd.decrypt(passwordEncrypted);
@@ -119,7 +119,7 @@ public class SecUtilTest {
     @Test
     void testDecryptSystemProperty() throws Exception {
         System.setProperty("foobar", masterPassword);
-        saveSec("system-property:foobar");
+        saveSec("system-property:/foobar");
         // /run/user/1000/gnupg/S.gpg-agent
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(),
@@ -130,7 +130,30 @@ public class SecUtilTest {
                         new EnvMasterPasswordSource(),
                         "gpg",
                         new GpgAgentMasterPasswordSource()),
-                Map.of("magic", new StaticPasswordDecryptor("magic")),
+                Map.of(),
+                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+
+        String pass = sd.decrypt(passwordEncrypted);
+
+        assertNotNull(pass);
+
+        assertEquals(password, pass);
+    }
+
+    @Test
+    void testDecryptEnv() throws Exception {
+        saveSec("env:/MASTER_PASSWORD");
+        // /run/user/1000/gnupg/S.gpg-agent
+        DefaultSecDispatcher sd = new DefaultSecDispatcher(
+                new DefaultPlexusCipher(),
+                Map.of(
+                        "prop",
+                        new SystemPropertyMasterPasswordSource(),
+                        "env",
+                        new EnvMasterPasswordSource(),
+                        "gpg",
+                        new GpgAgentMasterPasswordSource()),
+                Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         String pass = sd.decrypt(passwordEncrypted);
@@ -153,7 +176,7 @@ public class SecUtilTest {
                         new EnvMasterPasswordSource(),
                         "gpg",
                         new GpgAgentMasterPasswordSource()),
-                Map.of("magic", new StaticPasswordDecryptor("magic")),
+                Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         String pass = sd.decrypt(passwordEncrypted);
