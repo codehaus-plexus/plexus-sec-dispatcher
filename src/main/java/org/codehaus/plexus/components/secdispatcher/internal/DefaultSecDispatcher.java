@@ -128,34 +128,21 @@ public class DefaultSecDispatcher implements SecDispatcher {
         if (start != -1 && stop != -1 && stop > start) {
             if (start != 0) throw new SecDispatcherException("Attributes can be prefix only");
             if (stop == start + 1) return null;
-
             String attrs = str.substring(start + 1, stop).trim();
-
             if (attrs.isEmpty()) return null;
-
             Map<String, String> res = null;
-
             StringTokenizer st = new StringTokenizer(attrs, ",");
-
             while (st.hasMoreTokens()) {
                 if (res == null) res = new HashMap<>(st.countTokens());
-
                 String pair = st.nextToken();
-
                 int pos = pair.indexOf('=');
-
-                if (pos == -1) continue;
-
+                if (pos == -1) throw new SecDispatcherException("Attribute malformed: " + pair);
                 String key = pair.substring(0, pos).trim();
-
-                String val = pair.substring(pos + 1);
-
-                res.put(key, val.trim());
+                String val = pair.substring(pos + 1).trim();
+                res.put(key, val);
             }
-
             return res;
         }
-
         return null;
     }
 
