@@ -11,18 +11,19 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal;
 
-import java.io.FileWriter;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
+import org.codehaus.plexus.components.secdispatcher.model.Config;
+import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
+import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
+import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
-import org.sonatype.plexus.components.sec.dispatcher.model.Config;
-import org.sonatype.plexus.components.sec.dispatcher.model.ConfigProperty;
-import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
-import org.sonatype.plexus.components.sec.dispatcher.model.io.xpp3.SecurityConfigurationXpp3Writer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -35,32 +36,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  *
  */
 public class SecUtilTest {
-    String _pw = "{1wQaa6S/o8MH7FnaTNL53XmhT5O0SEGXQi3gC49o6OY=}";
-
-    String _clear = "testtest";
-
-    String _encrypted = "{BteqUEnqHecHM7MZfnj9FwLcYbdInWxou1C929Txa0A=}";
-
     String _confName = "cname";
-
     String _propName = "pname";
-
     String _propVal = "pval";
 
-    @BeforeEach
-    public void prepare() throws Exception {
-        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION, "./target/sec.xml");
-
-        // DefaultPlexusCipher c = new DefaultPlexusCipher();
-        // System.out.println(_clear+" -> "+c.encrypt( _clear, "testtest" ));
-
+    private void saveSec(String masterSource) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
 
-        sec.setRelocation("./target/sec1.xml");
-        new SecurityConfigurationXpp3Writer().write(new FileWriter("./target/sec.xml"), sec);
-
         sec.setRelocation(null);
-        sec.setMaster(_pw);
+        sec.setMasterSource(masterSource);
 
         ConfigProperty cp = new ConfigProperty();
         cp.setName(_propName);
@@ -72,34 +56,30 @@ public class SecUtilTest {
 
         sec.addConfiguration(conf);
 
-        new SecurityConfigurationXpp3Writer().write(new FileWriter("./target/sec1.xml"), sec);
+        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec1.xml"))) {
+            new SecurityConfigurationStaxWriter().write(fos, sec);
+        }
+    }
+
+    @BeforeEach
+    public void prepare() throws Exception {
+        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
+        SettingsSecurity sec = new SettingsSecurity();
+        sec.setRelocation("./target/sec1.xml");
+        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
+            new SecurityConfigurationStaxWriter().write(fos, sec);
+        }
+        saveSec("magic:mighty");
     }
 
     @Test
-    void testRead() throws Exception {
+    void testReadWithRelocation() throws Exception {
         SettingsSecurity sec = SecUtil.read("./target/sec.xml", true);
-
         assertNotNull(sec);
-
-        assertEquals(_pw, sec.getMaster());
-
+        assertEquals("magic:mighty", sec.getMasterSource());
         Map<String, String> conf = SecUtil.getConfig(sec, _confName);
-
         assertNotNull(conf);
-
         assertNotNull(conf.get(_propName));
-
         assertEquals(_propVal, conf.get(_propName));
-    }
-
-    @Test
-    void testDecrypt() throws Exception {
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(new DefaultPlexusCipher());
-
-        String pass = sd.decrypt(_encrypted);
-
-        assertNotNull(pass);
-
-        assertEquals(_clear, pass);
     }
 }

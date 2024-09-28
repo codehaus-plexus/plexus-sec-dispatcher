@@ -11,24 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-/**
- * This component decrypts a string, passed to it
- *
- * @author Oleg Gusakov
- */
-public interface SecDispatcher {
-    String[] SYSTEM_PROPERTY_MASTER_PASSWORD = new String[] {"settings.master.password", "settings-master-password"};
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
 
-    String[] SYSTEM_PROPERTY_SERVER_PASSWORD = new String[] {"settings.server.password", "settings-server-password"};
+import static java.util.Objects.requireNonNull;
 
-    /**
-     * decrypt given encrypted string
-     *
-     * @param str
-     * @return decrypted string
-     * @throws SecDispatcherException
-     */
-    String decrypt(String str) throws SecDispatcherException;
+public class StaticMasterPasswordSource implements MasterPasswordSource {
+    private final String masterPassword;
+
+    public StaticMasterPasswordSource(String masterPassword) {
+        this.masterPassword = requireNonNull(masterPassword);
+    }
+
+    @Override
+    public String handle(String masterSource) throws SecDispatcherException {
+        return masterPassword;
+    }
 }

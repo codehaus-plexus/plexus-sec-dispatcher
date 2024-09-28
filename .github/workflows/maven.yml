@@ -23,6 +23,8 @@ jobs:
   build:
     name: Build it
     uses: codehaus-plexus/.github/.github/workflows/maven.yml@master
+    with:
+      jdk-matrix: '[ "23", "21", "17" ]'
 
   deploy:
     name: Deploy

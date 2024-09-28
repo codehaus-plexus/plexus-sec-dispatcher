@@ -11,27 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher;
 
-import java.util.Map;
+public class SecDispatcherException extends RuntimeException {
+    public SecDispatcherException(String message) {
+        super(message);
+    }
 
-/**
- *
- *
- * @author Oleg Gusakov
- * @version $Id$
- *
- */
-public interface PasswordDecryptor {
-    /**
-     * decrypt given encrypted string
-     *
-     * @param str - string to decrypt
-     * @param attributes - string attributes
-     * @param config - configuration from settings-security.xml, if any
-     * @return decrypted string
-     *
-     * @throws SecDispatcherException
-     */
-    String decrypt(String str, Map attributes, Map config) throws SecDispatcherException;
+    public SecDispatcherException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

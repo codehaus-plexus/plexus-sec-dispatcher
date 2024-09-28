@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>2.1.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
 
@@ -33,31 +33,30 @@
   </distributionManagement>
 
   <properties>
+    <javaVersion>17</javaVersion>
     <project.build.outputTimestamp>2023-05-22T22:22:22Z</project.build.outputTimestamp>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-xml</artifactId>
-      <version>3.0.1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-utils</artifactId>
-      <version>4.0.2</version>
-    </dependency>
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cipher</artifactId>
-      <version>2.0</version>
+      <version>3.0.0</version>
     </dependency>
 
     <dependency>
       <groupId>javax.inject</groupId>
       <artifactId>javax.inject</artifactId>
       <version>1</version>
+      <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.sisu</groupId>
+      <artifactId>org.eclipse.sisu.inject</artifactId>
+      <version>${sisuMavenPluginVersion}</version>
+      <scope>provided</scope>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -76,7 +75,7 @@
         <artifactId>modello-maven-plugin</artifactId>
         <version>2.4.0</version>
         <configuration>
-          <version>1.0.0</version>
+          <version>3.0.0</version>
           <models>
             <model>src/main/mdo/settings-security.mdo</model>
           </models>
@@ -86,11 +85,21 @@
             <id>standard</id>
             <goals>
               <goal>java</goal>
-              <goal>xpp3-reader</goal>
-              <goal>xpp3-writer</goal>
+              <goal>xsd</goal>
+              <goal>stax-reader</goal>
+              <goal>stax-writer</goal>
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <MASTER_PASSWORD>masterPw</MASTER_PASSWORD>
+          </environmentVariables>
+        </configuration>
       </plugin>
     </plugins>
   </build>
