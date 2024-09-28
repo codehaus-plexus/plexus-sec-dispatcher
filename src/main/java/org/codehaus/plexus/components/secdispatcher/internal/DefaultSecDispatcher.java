@@ -71,7 +71,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
                 SettingsSecurity sec = getConfiguration(true);
                 String master = getMasterPassword(sec, true);
-                res = cipher.encrypt(str, master);
+                res = cipher.encrypt(getMasterCipher(sec), str, master);
             } else {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
                 Dispatcher dispatcher = dispatchers.get(type);
@@ -98,7 +98,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
                 SettingsSecurity sec = getConfiguration(true);
                 String master = getMasterPassword(sec, true);
-                return cipher.decrypt(bare, master);
+                return cipher.decrypt(getMasterCipher(sec), bare, master);
             } else {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
                 Dispatcher dispatcher = dispatchers.get(type);
@@ -187,6 +187,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
         } else {
             return null;
         }
+    }
+
+    private String getMasterCipher(SettingsSecurity sec) throws SecDispatcherException {
+        requireNonNull(sec, "configuration is null");
+        return requireNonNull(sec.getMasterCipher(), "masterCipher is null");
     }
 
     public String getConfigurationFile() {

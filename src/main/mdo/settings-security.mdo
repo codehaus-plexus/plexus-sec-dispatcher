@@ -49,6 +49,13 @@
         </field>
 
         <field>
+          <name>masterCipher</name>
+          <version>3.0.0+</version>
+          <type>String</type>
+          <description>The Cipher to be used</description>
+        </field>
+
+        <field>
           <name>relocation</name>
           <version>1.0.0+</version>
           <type>String</type>
