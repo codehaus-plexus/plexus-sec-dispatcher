@@ -17,19 +17,26 @@ import javax.xml.stream.XMLStreamException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxReader;
+import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 
 import static java.util.Objects.requireNonNull;
 
@@ -101,5 +108,65 @@ public final class SecUtil {
             }
         }
         return null;
+    }
+
+    public static void write(Path target, SettingsSecurity configuration) throws IOException {
+        requireNonNull(target, "file must not be null");
+        requireNonNull(configuration, "sec must not be null");
+        configuration.setModelVersion(SecDispatcher.class.getPackage().getImplementationVersion());
+        configuration.setModelEncoding(StandardCharsets.UTF_8.name());
+        writeFile(target, configuration, false);
+    }
+
+    public static void writeWithBackup(Path target, SettingsSecurity configuration) throws IOException {
+        requireNonNull(target, "file must not be null");
+        requireNonNull(configuration, "sec must not be null");
+        configuration.setModelVersion(SecDispatcher.class.getPackage().getImplementationVersion());
+        configuration.setModelEncoding(StandardCharsets.UTF_8.name());
+        writeFile(target, configuration, true);
+    }
+
+    private static final boolean IS_WINDOWS =
+            System.getProperty("os.name", "unknown").startsWith("Windows");
+
+    private static void writeFile(Path target, SettingsSecurity configuration, boolean doBackup) throws IOException {
+        requireNonNull(target, "target is null");
+        Path parent = requireNonNull(target.getParent(), "target must have parent");
+        Files.createDirectories(parent);
+        Path tempFile = parent.resolve(target.getFileName() + "."
+                + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".tmp");
+        try (OutputStream out = Files.newOutputStream(tempFile)) {
+            new SecurityConfigurationStaxWriter().write(out, configuration);
+            if (doBackup && Files.isRegularFile(target)) {
+                Files.copy(target, parent.resolve(target.getFileName() + ".bak"), StandardCopyOption.REPLACE_EXISTING);
+            }
+            if (IS_WINDOWS) {
+                copy(tempFile, target);
+            } else {
+                Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (XMLStreamException e) {
+            throw new IOException("XML Processing error", e);
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
+    /**
+     * On Windows we use pre-NIO2 way to copy files, as for some reason it works. Beat me why.
+     */
+    private static void copy(Path source, Path target) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024 * 32);
+        byte[] array = buffer.array();
+        try (InputStream is = Files.newInputStream(source);
+                OutputStream os = Files.newOutputStream(target)) {
+            while (true) {
+                int bytes = is.read(array);
+                if (bytes < 0) {
+                    break;
+                }
+                os.write(array, 0, bytes);
+            }
+        }
     }
 }
