@@ -18,29 +18,33 @@
  */
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-import javax.inject.Named;
-import javax.inject.Singleton;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
+
+import static java.util.Objects.requireNonNull;
 
 /**
- * Password source that uses env.
+ * Master password source support class.
  */
-@Singleton
-@Named(SystemPropertyMasterPasswordSource.NAME)
-public final class SystemPropertyMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
-    public static final String NAME = "prop";
+public abstract class MasterPasswordSourceSupport implements MasterPasswordSource {
+    private final Predicate<String> matcher;
+    private final Function<String, String> transformer;
 
-    public SystemPropertyMasterPasswordSource() {
-        super(NAME + ":");
+    public MasterPasswordSourceSupport(Predicate<String> matcher, Function<String, String> transformer) {
+        this.matcher = requireNonNull(matcher);
+        this.transformer = requireNonNull(transformer);
     }
 
     @Override
-    protected String doHandle(String transformed) throws SecDispatcherException {
-        String value = System.getProperty(transformed);
-        if (value == null) {
-            throw new SecDispatcherException("System property '" + transformed + "' not found");
+    public String handle(String masterSource) throws SecDispatcherException {
+        if (matcher.test(masterSource)) {
+            return doHandle(transformer.apply(masterSource));
         }
-        return value;
+        return null;
     }
+
+    protected abstract String doHandle(String transformed) throws SecDispatcherException;
 }

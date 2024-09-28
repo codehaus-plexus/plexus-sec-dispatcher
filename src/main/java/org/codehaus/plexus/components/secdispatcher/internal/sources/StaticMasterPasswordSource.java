@@ -13,8 +13,6 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-import java.net.URI;
-
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
 
@@ -28,7 +26,7 @@ public class StaticMasterPasswordSource implements MasterPasswordSource {
     }
 
     @Override
-    public String handle(URI uri) throws SecDispatcherException {
+    public String handle(String masterSource) throws SecDispatcherException {
         return masterPassword;
     }
 }

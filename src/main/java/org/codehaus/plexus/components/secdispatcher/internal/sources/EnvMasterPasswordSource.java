@@ -21,27 +21,25 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import java.net.URI;
-
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
 
 /**
  * Password source that uses env.
  */
 @Singleton
 @Named(EnvMasterPasswordSource.NAME)
-public final class EnvMasterPasswordSource implements MasterPasswordSource {
+public final class EnvMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
     public static final String NAME = "env";
 
+    public EnvMasterPasswordSource() {
+        super(NAME + ":");
+    }
+
     @Override
-    public String handle(URI uri) throws SecDispatcherException {
-        if (!NAME.equals(uri.getScheme())) {
-            return null;
-        }
-        String value = System.getenv(uri.getPath().substring(1));
+    protected String doHandle(String transformed) throws SecDispatcherException {
+        String value = System.getenv(transformed);
         if (value == null) {
-            throw new SecDispatcherException("Environment variable '" + uri.getPath() + "' not found");
+            throw new SecDispatcherException("Environment variable '" + transformed + "' not found");
         }
         return value;
     }

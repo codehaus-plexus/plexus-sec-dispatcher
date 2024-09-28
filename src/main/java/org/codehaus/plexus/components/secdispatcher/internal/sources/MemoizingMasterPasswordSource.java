@@ -13,7 +13,6 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-import java.net.URI;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
@@ -23,7 +22,7 @@ import static java.util.Objects.requireNonNull;
 
 public class MemoizingMasterPasswordSource implements MasterPasswordSource {
     private final MasterPasswordSource masterPasswordSource;
-    private final ConcurrentHashMap<URI, String> memo;
+    private final ConcurrentHashMap<String, String> memo;
 
     public MemoizingMasterPasswordSource(MasterPasswordSource masterPasswordSource) {
         this.masterPasswordSource = requireNonNull(masterPasswordSource);
@@ -31,7 +30,7 @@ public class MemoizingMasterPasswordSource implements MasterPasswordSource {
     }
 
     @Override
-    public String handle(URI uri) throws SecDispatcherException {
-        return memo.computeIfAbsent(uri, k -> masterPasswordSource.handle(uri));
+    public String handle(String masterSource) throws SecDispatcherException {
+        return memo.computeIfAbsent(masterSource, k -> masterPasswordSource.handle(masterSource));
     }
 }

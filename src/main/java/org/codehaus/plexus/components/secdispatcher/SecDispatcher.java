@@ -23,7 +23,7 @@ import java.util.Map;
 public interface SecDispatcher {
     String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
     String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
-    String TYPE_ATTR = "type";
+    String DISPATCHER_NAME_ATTR = "dispatcher.name";
 
     /**
      * encrypt given plaintext string

@@ -13,8 +13,6 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import java.net.URI;
-
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -29,5 +27,5 @@ public interface MasterPasswordSource {
      *     <li>happy path: return the master password.</li>
      * </ul>
      */
-    String handle(URI uri) throws SecDispatcherException;
+    String handle(String uri) throws SecDispatcherException;
 }

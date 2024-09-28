@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.Map;
 
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatcher.StaticDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterPasswordSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterPasswordSource;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -139,7 +141,7 @@ public class SecUtilTest {
     @Test
     void testDecryptSystemProperty() throws Exception {
         System.setProperty("foobar", masterPassword);
-        saveSec("system-property:/foobar");
+        saveSec("prop:foobar");
         // /run/user/1000/gnupg/S.gpg-agent
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(),
@@ -162,7 +164,7 @@ public class SecUtilTest {
 
     @Test
     void testDecryptEnv() throws Exception {
-        saveSec("env:/MASTER_PASSWORD");
+        saveSec("env:MASTER_PASSWORD");
         // /run/user/1000/gnupg/S.gpg-agent
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(),
@@ -183,7 +185,7 @@ public class SecUtilTest {
         assertEquals(password, pass);
     }
 
-    @Disabled("triggers GPG agent: remove this and type in master pw")
+    @Disabled("triggers GPG agent: remove this and type in 'masterPw'")
     @Test
     void testDecryptGpg() throws Exception {
         saveSec("gpg-agent:/run/user/1000/gnupg/S.gpg-agent");
@@ -214,8 +216,10 @@ public class SecUtilTest {
                 Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
-        String enc = sd.encrypt("whatever", Map.of("type", "magic", "a", "b"));
+        String enc = sd.encrypt("whatever", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "magic", "a", "b"));
         assertNotNull(enc);
+        assertTrue(enc.contains("encrypted"));
+        assertTrue(enc.contains(SecDispatcher.DISPATCHER_NAME_ATTR + "=magic"));
         System.out.println(enc);
         String password1 = sd.decrypt(enc);
         assertEquals("decrypted", password1);
@@ -230,7 +234,7 @@ public class SecUtilTest {
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
         String pass = sd.decrypt("{" + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8))
-                + "[a=b,type=magic]}");
+                + "[a=b," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]}");
 
         assertNotNull(pass);
 

@@ -17,8 +17,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -67,11 +65,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
         try {
             String res;
             SettingsSecurity sec = getSec();
-            if (attr == null || attr.get(TYPE_ATTR) == null) {
+            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
                 String master = getMaster(sec);
                 res = cipher.encrypt(str, master);
             } else {
-                String type = attr.get(TYPE_ATTR);
+                String type = attr.get(DISPATCHER_NAME_ATTR);
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
@@ -95,11 +93,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
             String bare = cipher.unDecorate(str);
             Map<String, String> attr = stripAttributes(bare);
             SettingsSecurity sec = getSec();
-            if (attr == null || attr.get(TYPE_ATTR) == null) {
+            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
                 String master = getMaster(sec);
                 return cipher.decrypt(bare, master);
             } else {
-                String type = attr.get(TYPE_ATTR);
+                String type = attr.get(DISPATCHER_NAME_ATTR);
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for type " + type);
@@ -178,14 +176,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     private String getMaster(SettingsSecurity sec) throws SecDispatcherException {
         String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
-        try {
-            URI masterSourceUri = new URI(masterSource);
-            for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
-                String master = masterPasswordSource.handle(masterSourceUri);
-                if (master != null) return master;
-            }
-        } catch (URISyntaxException e) {
-            throw new SecDispatcherException("Invalid master source URI", e);
+        for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
+            String master = masterPasswordSource.handle(masterSource);
+            if (master != null) return master;
         }
         throw new SecDispatcherException("master password could not be fetched");
     }

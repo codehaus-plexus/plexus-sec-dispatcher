@@ -13,7 +13,6 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-import java.net.URI;
 import java.util.function.Predicate;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
@@ -22,18 +21,18 @@ import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSourc
 import static java.util.Objects.requireNonNull;
 
 public class MatchingMasterPasswordSource implements MasterPasswordSource {
-    private final Predicate<URI> matcher;
+    private final Predicate<String> matcher;
     private final MasterPasswordSource masterPasswordSource;
 
-    public MatchingMasterPasswordSource(Predicate<URI> matcher, MasterPasswordSource masterPasswordSource) {
+    public MatchingMasterPasswordSource(Predicate<String> matcher, MasterPasswordSource masterPasswordSource) {
         this.matcher = requireNonNull(matcher);
         this.masterPasswordSource = requireNonNull(masterPasswordSource);
     }
 
     @Override
-    public String handle(URI uri) throws SecDispatcherException {
-        if (matcher.test(uri)) {
-            return masterPasswordSource.handle(uri);
+    public String handle(String masterSource) throws SecDispatcherException {
+        if (matcher.test(masterSource)) {
+            return masterPasswordSource.handle(masterSource);
         }
         return null;
     }

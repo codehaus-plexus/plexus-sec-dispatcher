@@ -26,7 +26,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.StandardProtocolFamily;
-import java.net.URI;
 import java.net.UnixDomainSocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
@@ -35,23 +34,28 @@ import java.nio.file.Paths;
 import java.util.HexFormat;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
 
 /**
  * Password source that uses GnuPG Agent.
  */
 @Singleton
 @Named(GpgAgentMasterPasswordSource.NAME)
-public final class GpgAgentMasterPasswordSource implements MasterPasswordSource {
+public final class GpgAgentMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
     public static final String NAME = "gpg-agent";
 
+    public GpgAgentMasterPasswordSource() {
+        super(NAME + ":");
+    }
+
     @Override
-    public String handle(URI uri) throws SecDispatcherException {
-        if (!NAME.equals(uri.getScheme())) {
-            return null;
+    protected String doHandle(String transformed) throws SecDispatcherException {
+        String extra = "";
+        if (transformed.contains("?")) {
+            extra = transformed.substring(transformed.indexOf("?"));
+            transformed = transformed.substring(0, transformed.indexOf("?"));
         }
-        String socketLocation = uri.getPath();
-        boolean interactive = uri.getQuery() == null || !uri.getQuery().contains("non-interactive");
+        String socketLocation = transformed;
+        boolean interactive = !extra.contains("non-interactive");
         try {
             Path socketLocationPath = Paths.get(socketLocation);
             if (!socketLocationPath.isAbsolute()) {
