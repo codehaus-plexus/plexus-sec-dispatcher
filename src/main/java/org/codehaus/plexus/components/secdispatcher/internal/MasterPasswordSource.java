@@ -11,24 +11,23 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal;
+
+import java.net.URI;
+
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
- * This component decrypts a string, passed to it
- *
- * @author Oleg Gusakov
+ * Source of master password.
  */
-public interface SecDispatcher {
-    String[] SYSTEM_PROPERTY_MASTER_PASSWORD = new String[] {"settings.master.password", "settings-master-password"};
-
-    String[] SYSTEM_PROPERTY_SERVER_PASSWORD = new String[] {"settings.server.password", "settings-server-password"};
-
+public interface MasterPasswordSource {
     /**
-     * decrypt given encrypted string
-     *
-     * @param str
-     * @return decrypted string
-     * @throws SecDispatcherException
+     * Handles the URI to get master password. Implementation may do one of the following things:
+     * <ul>
+     *     <li>if the URI cannot be handled by given source, return {@code null}</li>
+     *     <li>if master password retrieval was attempted, but failed throw {@link SecDispatcherException}</li>
+     *     <li>happy path: return the master password.</li>
+     * </ul>
      */
-    String decrypt(String str) throws SecDispatcherException;
+    String handle(URI uri) throws SecDispatcherException;
 }

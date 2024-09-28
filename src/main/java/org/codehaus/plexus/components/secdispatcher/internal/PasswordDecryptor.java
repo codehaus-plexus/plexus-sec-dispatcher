@@ -11,9 +11,11 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal;
 
 import java.util.Map;
+
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  *
@@ -33,5 +35,6 @@ public interface PasswordDecryptor {
      *
      * @throws SecDispatcherException
      */
-    String decrypt(String str, Map<String, String> attributes, Map<String, String> config) throws SecDispatcherException;
+    String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
+            throws SecDispatcherException;
 }

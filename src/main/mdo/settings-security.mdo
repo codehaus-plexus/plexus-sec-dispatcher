@@ -23,7 +23,7 @@
   <defaults>
     <default>
       <key>package</key>
-      <value>org.sonatype.plexus.components.sec.dispatcher.model</value>
+      <value>org.codehaus.plexus.components.secdispatcher.model</value>
     </default>
   </defaults>
   
@@ -36,9 +36,16 @@
 
         <field>
           <name>master</name>
-          <version>1.0.0+</version>
+          <version>1.0.0/2.1.0</version>
           <type>String</type>
           <description>encrypted master password</description>
+        </field>
+
+        <field>
+          <name>masterSource</name>
+          <version>3.0.0+</version>
+          <type>String</type>
+          <description>The URI describing the source of the master password</description>
         </field>
 
         <field>

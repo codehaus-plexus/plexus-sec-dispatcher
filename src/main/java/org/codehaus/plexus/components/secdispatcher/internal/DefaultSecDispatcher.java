@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -19,14 +19,21 @@ import javax.inject.Singleton;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 
-import org.sonatype.plexus.components.cipher.DefaultPlexusCipher;
-import org.sonatype.plexus.components.cipher.PlexusCipher;
-import org.sonatype.plexus.components.cipher.PlexusCipherException;
-import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
+import org.codehaus.plexus.components.cipher.PlexusCipher;
+import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author Oleg Gusakov
@@ -34,46 +41,29 @@ import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
 @Singleton
 @Named
 public class DefaultSecDispatcher implements SecDispatcher {
-    private static final String DEFAULT_CONFIGURATION = "~/.settings-security.xml";
+    public static final String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
 
     public static final String SYSTEM_PROPERTY_SEC_LOCATION = "settings.security";
 
     public static final String TYPE_ATTR = "type";
-
     public static final char ATTR_START = '[';
-
     public static final char ATTR_STOP = ']';
 
-    /**
-     * DefaultHandler
-     */
-    protected final PlexusCipher _cipher;
-
-    /**
-     * All available dispatchers
-     */
-    protected final Map<String, PasswordDecryptor> _decryptors;
-
-    /**
-     * Configuration file
-     */
-    protected String _configurationFile;
+    protected final PlexusCipher cipher;
+    protected final Map<String, MasterPasswordSource> masterPasswordSources;
+    protected final Map<String, PasswordDecryptor> decryptors;
+    protected String configurationFile;
 
     @Inject
     public DefaultSecDispatcher(
-            final PlexusCipher _cipher,
-            final Map<String, PasswordDecryptor> _decryptors,
-            @Named("${_configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String _configurationFile) {
-        this._cipher = _cipher;
-        this._decryptors = _decryptors;
-        this._configurationFile = _configurationFile;
-    }
-
-    /**
-     * Ctor to be used in tests and other simplified cases (no decryptors and config).
-     */
-    public DefaultSecDispatcher(final PlexusCipher _cipher) {
-        this(_cipher, new HashMap<>(), DEFAULT_CONFIGURATION);
+            PlexusCipher cipher,
+            Map<String, MasterPasswordSource> masterPasswordSources,
+            Map<String, PasswordDecryptor> decryptors,
+            @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
+        this.cipher = cipher;
+        this.masterPasswordSources = masterPasswordSources;
+        this.decryptors = decryptors;
+        this.configurationFile = configurationFile;
     }
 
     // ---------------------------------------------------------------
@@ -85,7 +75,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         String bare;
 
         try {
-            bare = _cipher.unDecorate(str);
+            bare = cipher.unDecorate(str);
 
             Map<String, String> attr = stripAttributes(bare);
 
@@ -96,17 +86,17 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (attr == null || attr.get("type") == null) {
                 String master = getMaster(sec);
 
-                res = _cipher.decrypt(bare, master);
+                res = cipher.decrypt(bare, master);
             } else {
                 String type = attr.get(TYPE_ATTR);
 
-                if (_decryptors == null)
+                if (decryptors == null)
                     throw new SecDispatcherException(
                             "plexus container did not supply any required dispatchers - cannot lookup " + type);
 
                 Map<String, String> conf = SecUtil.getConfig(sec, type);
 
-                PasswordDecryptor dispatcher = _decryptors.get(type);
+                PasswordDecryptor dispatcher = decryptors.get(type);
 
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for hint " + type);
 
@@ -141,7 +131,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
             Map<String, String> res = null;
 
-            StringTokenizer st = new StringTokenizer(attrs, ", ");
+            StringTokenizer st = new StringTokenizer(attrs, ",");
 
             while (st.hasMoreTokens()) {
                 if (res == null) res = new HashMap<>(st.countTokens());
@@ -170,7 +160,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     private boolean isEncryptedString(String str) {
         if (str == null) return false;
 
-        return _cipher.isEncryptedString(str);
+        return cipher.isEncryptedString(str);
     }
 
     // ----------------------------------------------------------------------------
@@ -192,23 +182,25 @@ public class DefaultSecDispatcher implements SecDispatcher {
     // ----------------------------------------------------------------------------
 
     private String getMaster(SettingsSecurity sec) throws SecDispatcherException {
-        String master = sec.getMaster();
-
-        if (master == null) throw new SecDispatcherException("master password is not set");
-
+        String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
         try {
-            return _cipher.decryptDecorated(master, SYSTEM_PROPERTY_SEC_LOCATION);
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException(e.getMessage(), e);
+            URI masterSourceUri = new URI(masterSource);
+            for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
+                String master = masterPasswordSource.handle(masterSourceUri);
+                if (master != null) return master;
+            }
+        } catch (URISyntaxException e) {
+            throw new SecDispatcherException("Invalid master source URI", e);
         }
+        throw new SecDispatcherException("master password could not be fetched");
     }
     // ---------------------------------------------------------------
     public String getConfigurationFile() {
-        return _configurationFile;
+        return configurationFile;
     }
 
     public void setConfigurationFile(String file) {
-        _configurationFile = file;
+        configurationFile = file;
     }
 
     // ---------------------------------------------------------------
@@ -241,6 +233,12 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     // ---------------------------------------------------------------
 
+    private static final String[] SYSTEM_PROPERTY_MASTER_PASSWORD =
+            new String[] {"settings.master.password", "settings-master-password"};
+
+    private static final String[] SYSTEM_PROPERTY_SERVER_PASSWORD =
+            new String[] {"settings.server.password", "settings-server-password"};
+
     public static void main(String[] args) throws Exception {
         if (args == null || args.length < 1) {
             usage();
@@ -267,7 +265,8 @@ public class DefaultSecDispatcher implements SecDispatcher {
         System.out.println("\n");
 
         DefaultPlexusCipher dc = new DefaultPlexusCipher();
-        DefaultSecDispatcher dd = new DefaultSecDispatcher(dc);
+        DefaultSecDispatcher dd =
+                new DefaultSecDispatcher(dc, Collections.emptyMap(), Collections.emptyMap(), DEFAULT_CONFIGURATION);
 
         if (showMaster)
             System.out.println(dc.encryptAndDecorate(pass, DefaultSecDispatcher.SYSTEM_PROPERTY_SEC_LOCATION));

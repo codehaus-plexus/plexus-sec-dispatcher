@@ -11,7 +11,7 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,10 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.sonatype.plexus.components.sec.dispatcher.model.Config;
-import org.sonatype.plexus.components.sec.dispatcher.model.ConfigProperty;
-import org.sonatype.plexus.components.sec.dispatcher.model.SettingsSecurity;
-import org.sonatype.plexus.components.sec.dispatcher.model.io.xpp3.SecurityConfigurationXpp3Reader;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.model.Config;
+import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
+import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
+import org.codehaus.plexus.components.secdispatcher.model.io.xpp3.SecurityConfigurationXpp3Reader;
 
 /**
  *

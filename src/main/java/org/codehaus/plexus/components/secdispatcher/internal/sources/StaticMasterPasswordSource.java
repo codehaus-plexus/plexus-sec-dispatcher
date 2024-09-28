@@ -11,13 +11,24 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.sonatype.plexus.components.sec.dispatcher;
+package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-public class SecDispatcherException extends RuntimeException {
-    public SecDispatcherException(String message) {
-        super(message);
+import java.net.URI;
+
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
+
+import static java.util.Objects.requireNonNull;
+
+public class StaticMasterPasswordSource implements MasterPasswordSource {
+    private final String masterPassword;
+
+    public StaticMasterPasswordSource(String masterPassword) {
+        this.masterPassword = requireNonNull(masterPassword);
     }
-    public SecDispatcherException(String message, Throwable cause) {
-        super(message, cause);
+
+    @Override
+    public String handle(URI uri) throws SecDispatcherException {
+        return masterPassword;
     }
 }
