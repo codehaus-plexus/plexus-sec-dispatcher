@@ -68,13 +68,12 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
         try {
             String res;
-            SettingsSecurity sec = getSec();
             if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                String master = getMaster(sec);
+                SettingsSecurity sec = getConfiguration(true);
+                String master = getMasterPassword(sec, true);
                 res = cipher.encrypt(str, master);
             } else {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
-                Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
                 res = ATTR_START
@@ -82,7 +81,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
                                 .map(e -> e.getKey() + "=" + e.getValue())
                                 .collect(Collectors.joining(","))
                         + ATTR_STOP;
-                res += dispatcher.encrypt(str, attr, conf);
+                res += dispatcher.encrypt(str, attr, prepareDispatcherConfig(type));
             }
             return cipher.decorate(res);
         } catch (PlexusCipherException e) {
@@ -96,21 +95,33 @@ public class DefaultSecDispatcher implements SecDispatcher {
         try {
             String bare = cipher.unDecorate(str);
             Map<String, String> attr = stripAttributes(bare);
-            SettingsSecurity sec = getSec();
             if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                String master = getMaster(sec);
+                SettingsSecurity sec = getConfiguration(true);
+                String master = getMasterPassword(sec, true);
                 return cipher.decrypt(bare, master);
             } else {
                 String type = attr.get(DISPATCHER_NAME_ATTR);
-                Map<String, String> conf = SecUtil.getConfig(sec, type);
                 Dispatcher dispatcher = dispatchers.get(type);
                 if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
-                String pass = strip(bare);
-                return dispatcher.decrypt(pass, attr, conf);
+                return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(type));
             }
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
+    }
+
+    private Map<String, String> prepareDispatcherConfig(String type) {
+        HashMap<String, String> dispatcherConf = new HashMap<>();
+        SettingsSecurity sec = getConfiguration(false);
+        String master = getMasterPassword(sec, false);
+        if (master != null) {
+            dispatcherConf.put(Dispatcher.CONF_MASTER_PASSWORD, master);
+        }
+        Map<String, String> conf = SecUtil.getConfig(sec, type);
+        if (conf != null) {
+            dispatcherConf.putAll(conf);
+        }
+        return dispatcherConf;
     }
 
     private String strip(String str) {
@@ -151,27 +162,31 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return cipher.isEncryptedString(str);
     }
 
-    private SettingsSecurity getSec() throws SecDispatcherException {
+    private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
         String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
-        String realLocation =
-                location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
-
-        SettingsSecurity sec = SecUtil.read(realLocation, true);
-
-        if (sec == null)
-            throw new SecDispatcherException(
-                    "cannot retrieve master password. Please check that " + realLocation + " exists and has data");
+        location = location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
+        SettingsSecurity sec = SecUtil.read(location, true);
+        if (mandatory && sec == null)
+            throw new SecDispatcherException("Please check that configuration file on path " + location + " exists");
 
         return sec;
     }
 
-    private String getMaster(SettingsSecurity sec) throws SecDispatcherException {
+    private String getMasterPassword(SettingsSecurity sec, boolean mandatory) throws SecDispatcherException {
+        if (sec == null && !mandatory) {
+            return null;
+        }
+        requireNonNull(sec, "configuration is null");
         String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
         for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
-            String master = masterPasswordSource.handle(masterSource);
-            if (master != null) return master;
+            String masterPassword = masterPasswordSource.handle(masterSource);
+            if (masterPassword != null) return masterPassword;
         }
-        throw new SecDispatcherException("master password could not be fetched");
+        if (mandatory) {
+            throw new SecDispatcherException("master password could not be fetched");
+        } else {
+            return null;
+        }
     }
 
     public String getConfigurationFile() {

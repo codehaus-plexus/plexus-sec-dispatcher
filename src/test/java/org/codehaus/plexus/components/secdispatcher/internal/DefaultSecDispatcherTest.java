@@ -21,6 +21,7 @@ import java.util.Set;
 
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatcher.StaticDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterPasswordSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterPasswordSource;
@@ -171,5 +172,41 @@ public class DefaultSecDispatcherTest {
                 + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8)) + "}");
         assertNotNull(pass);
         assertEquals("decrypted", pass);
+    }
+
+    @Test
+    void testDecryptWithDispatcherConf() throws Exception {
+        String bare = Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8));
+        DefaultSecDispatcher sd = new DefaultSecDispatcher(
+                new DefaultPlexusCipher(),
+                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
+                Map.of("magic", new Dispatcher() {
+                    @Override
+                    public String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
+                            throws SecDispatcherException {
+                        throw new IllegalStateException("should not be called");
+                    }
+
+                    @Override
+                    public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
+                            throws SecDispatcherException {
+                        assertEquals(bare, str);
+                        assertEquals(2, attributes.size());
+                        assertEquals("magic", attributes.get(SecDispatcher.DISPATCHER_NAME_ATTR));
+                        assertEquals("value", attributes.get("key"));
+
+                        assertEquals(1, config.size());
+                        assertEquals(masterPassword, config.get(Dispatcher.CONF_MASTER_PASSWORD));
+
+                        return "magic";
+                    }
+                }),
+                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+
+        assertEquals(Set.of("magic"), sd.availableDispatchers());
+        String pass = sd.decrypt("{" + "[key=value," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]"
+                + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8)) + "}");
+        assertNotNull(pass);
+        assertEquals("magic", pass);
     }
 }

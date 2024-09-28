@@ -26,11 +26,17 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  */
 public interface Dispatcher {
     /**
+     * Configuration key for masterPassword. It may be present, if SecDispatcher could
+     * obtain it, but presence is not optional.
+     */
+    String CONF_MASTER_PASSWORD = "masterPassword";
+
+    /**
      * encrypt given plaintext string
      *
      * @param str string to encrypt
      * @param attributes attributes, never {@code null}
-     * @param config configuration from settings-security.xml, may be {@code null}
+     * @param config configuration from settings-security.xml, never {@code null}
      * @return encrypted string
      */
     String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
@@ -41,7 +47,7 @@ public interface Dispatcher {
      *
      * @param str string to decrypt
      * @param attributes attributes, never {@code null}
-     * @param config configuration from settings-security.xml, may be {@code null}
+     * @param config configuration from settings-security.xml, never {@code null}
      * @return decrypted string
      */
     String decrypt(String str, Map<String, String> attributes, Map<String, String> config)

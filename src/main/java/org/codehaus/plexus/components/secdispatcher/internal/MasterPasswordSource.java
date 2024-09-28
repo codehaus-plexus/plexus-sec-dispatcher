@@ -26,6 +26,10 @@ public interface MasterPasswordSource {
      *     <li>if master password retrieval was attempted, but failed throw {@link SecDispatcherException}</li>
      *     <li>happy path: return the master password.</li>
      * </ul>
+     *
+     * @param masterSource the source of master password, and opaque string.
+     * @return the master password, or {@code null} if implementation does not handle this masterSource
+     * @throws SecDispatcherException If implementation does handle this masterSource, but cannot obtain it
      */
-    String handle(String uri) throws SecDispatcherException;
+    String handle(String masterSource) throws SecDispatcherException;
 }
