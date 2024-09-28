@@ -17,6 +17,7 @@ import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
@@ -148,6 +149,7 @@ public class DefaultSecDispatcherTest {
                 Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
+        assertEquals(Set.of("magic"), sd.availableDispatchers());
         String enc = sd.encrypt("whatever", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "magic", "a", "b"));
         assertNotNull(enc);
         assertTrue(enc.contains("encrypted"));
@@ -164,6 +166,7 @@ public class DefaultSecDispatcherTest {
                 Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
+        assertEquals(Set.of("magic"), sd.availableDispatchers());
         String pass = sd.decrypt("{" + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8))
                 + "[a=b," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]}");
         assertNotNull(pass);

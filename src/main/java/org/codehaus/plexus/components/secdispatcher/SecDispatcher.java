@@ -22,8 +22,24 @@ import java.util.Set;
  * @author Oleg Gusakov
  */
 public interface SecDispatcher {
+    /**
+     * The default path of configuration.
+     * <p>
+     * The character {@code ~} (tilde) may be present as first character ONLY and is
+     * interpreted as "user home".
+     */
     String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
+
+    /**
+     * Java System Property that may be set, to override configuration path.
+     */
     String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
+
+    /**
+     * Attribute that selects a dispatcher.
+     *
+     * @see #availableDispatchers()
+     */
     String DISPATCHER_NAME_ATTR = "name";
 
     /**
