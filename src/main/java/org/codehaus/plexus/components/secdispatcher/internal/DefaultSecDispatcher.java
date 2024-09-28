@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -170,7 +171,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
         String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
         location = location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
-        SettingsSecurity sec = SecUtil.read(location, true);
+        SettingsSecurity sec = SecUtil.read(Paths.get(location), true);
         if (mandatory && sec == null)
             throw new SecDispatcherException("Please check that configuration file on path " + location + " exists");
 

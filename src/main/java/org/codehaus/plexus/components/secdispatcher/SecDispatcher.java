@@ -26,7 +26,7 @@ public interface SecDispatcher {
      * The default path of configuration.
      * <p>
      * The character {@code ~} (tilde) may be present as first character ONLY and is
-     * interpreted as "user home".
+     * interpreted as "user.home" system property, and it MUST be followed by path separator.
      */
     String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
 

@@ -19,31 +19,27 @@
   xml.schemaLocation="https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-${version}.xsd">
 
   <id>settings-security</id>
-  
   <name>SecurityConfiguration</name>
   <description>SecurityConfiguration</description>
-  
+
   <defaults>
     <default>
       <key>package</key>
       <value>org.codehaus.plexus.components.secdispatcher.model</value>
     </default>
   </defaults>
-  
-  <classes>
 
+  <classes>
     <class rootElement="true">
       <name>SettingsSecurity</name>
       <version>1.0.0+</version>
       <fields>
-
         <field>
           <name>master</name>
           <version>1.0.0/2.1.0</version>
           <type>String</type>
           <description>encrypted master password</description>
         </field>
-
         <field>
           <name>modelVersion</name>
           <version>3.0.0+</version>
@@ -51,59 +47,52 @@
           <required>true</required>
           <description>The version of the model</description>
         </field>
-
         <field>
           <name>masterSource</name>
           <version>3.0.0+</version>
           <type>String</type>
           <required>true</required>
-          <description>The URI describing the source of the master password</description>
+          <description>The masterSource describes the source of the master password</description>
         </field>
-
         <field>
           <name>masterCipher</name>
           <version>3.0.0+</version>
           <type>String</type>
           <required>true</required>
-          <description>The Cipher to be used</description>
+          <description>The Cipher to be used for master password</description>
         </field>
-
         <field>
           <name>relocation</name>
           <version>1.0.0+</version>
           <type>String</type>
           <required>false</required>
-          <description>reference to the location of the security file</description>
+          <description>Relocates configuration to given reference. Reference if relative, will be resolved from the relocated configuration directory</description>
         </field>
-
         <field>
           <name>configurations</name>
           <version>1.0.0+</version>
-          <description>named configurations</description>
+          <description>Optional named Dispatcher configurations</description>
           <required>false</required>
           <association>
             <type>Config</type>
             <multiplicity>*</multiplicity>
           </association>
         </field>
-
       </fields>
     </class>
 
     <class>
       <name>Config</name>
       <version>1.0.0+</version>
-      <description>Named configuration</description>
+      <description>Named Dispatcher configuration</description>
       <fields>
-      
         <field>
           <name>name</name>
           <type>String</type>
           <required>true</required>
           <version>1.0.0+</version>
-          <description>name of this configuration</description>
+          <description>Name of Dispatcher configuration is meant for</description>
         </field>
-
         <field>
           <name>properties</name>
           <version>1.0.0+</version>
@@ -113,17 +102,13 @@
             <multiplicity>*</multiplicity>
           </association>
         </field>
-        
       </fields>
     </class>
-
     <class>
       <name>ConfigProperty</name>
       <version>1.0.0+</version>
       <description>generic property - name/value pair</description>
-      
       <fields>
-      
         <field>
           <name>name</name>
           <type>String</type>
@@ -131,7 +116,6 @@
           <version>1.0.0+</version>
           <description>name of this property</description>
         </field>
-
         <field>
           <name>value</name>
           <type>String</type>
@@ -139,9 +123,7 @@
           <version>1.0.0+</version>
           <description>value of this property</description>
         </field>
-        
       </fields>
     </class>
-
   </classes>
 </model>

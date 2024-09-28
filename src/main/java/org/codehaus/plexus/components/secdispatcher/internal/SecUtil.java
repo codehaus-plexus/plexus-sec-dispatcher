@@ -17,11 +17,11 @@ import javax.xml.stream.XMLStreamException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -40,21 +40,36 @@ import static java.util.Objects.requireNonNull;
  * @version $Id$
  *
  */
-public class SecUtil {
+public final class SecUtil {
+    private SecUtil() {}
 
-    public static final String PROTOCOL_DELIM = "://";
-    public static final int PROTOCOL_DELIM_LEN = PROTOCOL_DELIM.length();
-    public static final String[] URL_PROTOCOLS =
-            new String[] {"http", "https", "dav", "file", "davs", "webdav", "webdavs", "dav+http", "dav+https"};
+    private static final int MAX_RELOCATIONS = 5;
 
-    public static SettingsSecurity read(String location, boolean cycle) throws SecDispatcherException {
-        if (location == null) throw new SecDispatcherException("location to read from is null");
+    /**
+     * Reads the configuration model up, optionally resolving relocation too.
+     */
+    public static SettingsSecurity read(Path configurationFile, boolean followRelocation)
+            throws SecDispatcherException {
+        requireNonNull(configurationFile, "configurationFile must not be null");
+        LinkedHashSet<Path> paths = new LinkedHashSet<>();
+        return read(paths, configurationFile, followRelocation);
+    }
+
+    private static SettingsSecurity read(LinkedHashSet<Path> paths, Path configurationFile, boolean follow)
+            throws SecDispatcherException {
+        if (!paths.add(configurationFile)) {
+            throw new SecDispatcherException("Configuration relocation form a cycle: " + paths);
+        }
+        if (paths.size() > MAX_RELOCATIONS) {
+            throw new SecDispatcherException("Configuration relocation is too deep: " + paths);
+        }
         SettingsSecurity sec;
         try {
-            try (InputStream in = toStream(location)) {
+            try (InputStream in = Files.newInputStream(configurationFile)) {
                 sec = new SecurityConfigurationStaxReader().read(in);
             }
-            if (cycle && sec.getRelocation() != null) return read(sec.getRelocation(), true);
+            if (follow && sec.getRelocation() != null)
+                return read(paths, configurationFile.getParent().resolve(sec.getRelocation()), true);
             return sec;
         } catch (NoSuchFileException e) {
             return null;
@@ -63,21 +78,6 @@ public class SecUtil {
         } catch (XMLStreamException e) {
             throw new SecDispatcherException("Parsing error", e);
         }
-    }
-
-    private static InputStream toStream(String resource) throws IOException {
-        requireNonNull(resource, "resource is null");
-        int ind = resource.indexOf(PROTOCOL_DELIM);
-        if (ind > 1) {
-            String protocol = resource.substring(0, ind);
-            resource = resource.substring(ind + PROTOCOL_DELIM_LEN);
-            for (String p : URL_PROTOCOLS) {
-                if (protocol.regionMatches(true, 0, p, 0, p.length())) {
-                    return new URL(p + PROTOCOL_DELIM + resource).openStream();
-                }
-            }
-        }
-        return Files.newInputStream(Paths.get(resource));
     }
 
     public static Map<String, String> getConfig(SettingsSecurity sec, String name) {
