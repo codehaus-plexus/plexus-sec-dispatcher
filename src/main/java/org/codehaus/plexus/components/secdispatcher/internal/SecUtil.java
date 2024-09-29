@@ -18,7 +18,6 @@ import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
@@ -89,23 +88,12 @@ public final class SecUtil {
         return null;
     }
 
-    public static void write(Path target, SettingsSecurity configuration) throws IOException {
-        requireNonNull(target, "file must not be null");
-        requireNonNull(configuration, "sec must not be null");
-        writeFile(target, configuration, false);
-    }
-
-    public static void writeWithBackup(Path target, SettingsSecurity configuration) throws IOException {
-        requireNonNull(target, "file must not be null");
-        requireNonNull(configuration, "sec must not be null");
-        writeFile(target, configuration, true);
-    }
-
     private static final boolean IS_WINDOWS =
             System.getProperty("os.name", "unknown").startsWith("Windows");
 
-    private static void writeFile(Path target, SettingsSecurity configuration, boolean doBackup) throws IOException {
-        requireNonNull(target, "target is null");
+    public static void write(Path target, SettingsSecurity configuration, boolean doBackup) throws IOException {
+        requireNonNull(target, "file must not be null");
+        requireNonNull(configuration, "configuration must not be null");
         Path parent = requireNonNull(target.getParent(), "target must have parent");
         Files.createDirectories(parent);
         Path tempFile = parent.resolve(target.getFileName() + "."
@@ -114,13 +102,19 @@ public final class SecUtil {
         configuration.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         configuration.setModelEncoding(StandardCharsets.UTF_8.name());
 
-        try (OutputStream out = Files.newOutputStream(tempFile)) {
-            new SecurityConfigurationStaxWriter().write(out, configuration);
+        try {
+            try (OutputStream tempOut = Files.newOutputStream(tempFile)) {
+                new SecurityConfigurationStaxWriter().write(tempOut, configuration);
+            }
+
             if (doBackup && Files.isRegularFile(target)) {
                 Files.copy(target, parent.resolve(target.getFileName() + ".bak"), StandardCopyOption.REPLACE_EXISTING);
             }
             if (IS_WINDOWS) {
-                copy(tempFile, target);
+                try (InputStream is = Files.newInputStream(tempFile);
+                        OutputStream os = Files.newOutputStream(target)) {
+                    is.transferTo(os);
+                }
             } else {
                 Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
             }
@@ -128,24 +122,6 @@ public final class SecUtil {
             throw new IOException("XML Processing error", e);
         } finally {
             Files.deleteIfExists(tempFile);
-        }
-    }
-
-    /**
-     * On Windows we use pre-NIO2 way to copy files, as for some reason it works. Beat me why.
-     */
-    private static void copy(Path source, Path target) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(1024 * 32);
-        byte[] array = buffer.array();
-        try (InputStream is = Files.newInputStream(source);
-                OutputStream os = Files.newOutputStream(target)) {
-            while (true) {
-                int bytes = is.read(array);
-                if (bytes < 0) {
-                    break;
-                }
-                os.write(array, 0, bytes);
-            }
         }
     }
 }

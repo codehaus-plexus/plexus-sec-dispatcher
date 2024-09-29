@@ -130,7 +130,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     @Override
     public void writeConfiguration(SettingsSecurity configuration) throws IOException {
         requireNonNull(configuration, "configuration is null");
-        SecUtil.writeWithBackup(getConfigurationPath(), configuration);
+        SecUtil.write(getConfigurationPath(), configuration, true);
     }
 
     private Map<String, String> prepareDispatcherConfig(String type) {

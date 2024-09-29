@@ -55,7 +55,7 @@ public class SecUtilTest {
         conf.setName(_confName);
         conf.addProperty(cp);
         sec.addConfiguration(conf);
-        SecUtil.write(Paths.get(path), sec);
+        SecUtil.write(Paths.get(path), sec, false);
     }
 
     @BeforeEach
@@ -71,7 +71,7 @@ public class SecUtilTest {
         assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
         assertEquals("magic:mighty", config.getMasterSource());
-        SecUtil.write(path, config);
+        SecUtil.write(path, config, false);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class SecUtilTest {
         assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
         assertEquals("magic:mighty", config.getMasterSource());
-        SecUtil.writeWithBackup(path, config);
+        SecUtil.write(path, config, true);
         assertTrue(Files.exists(path));
         assertTrue(Files.exists(path.getParent().resolve(path.getFileName() + ".bak")));
     }
