@@ -13,20 +13,21 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import java.io.OutputStream;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
-import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  *
@@ -40,46 +41,49 @@ public class SecUtilTest {
     String _propName = "pname";
     String _propVal = "pval";
 
-    private void saveSec(String masterSource) throws Exception {
+    private void saveSec(String masterSource) throws IOException {
+        saveSec("./target/sec.xml", masterSource);
+    }
+
+    private void saveSec(String path, String masterSource) throws IOException {
         SettingsSecurity sec = new SettingsSecurity();
-
-        sec.setRelocation(null);
         sec.setMasterSource(masterSource);
-
         ConfigProperty cp = new ConfigProperty();
         cp.setName(_propName);
         cp.setValue(_propVal);
-
         Config conf = new Config();
         conf.setName(_confName);
         conf.addProperty(cp);
-
         sec.addConfiguration(conf);
-
-        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec1.xml"))) {
-            new SecurityConfigurationStaxWriter().write(fos, sec);
-        }
+        SecUtil.write(Paths.get(path), sec, false);
     }
 
     @BeforeEach
-    public void prepare() throws Exception {
-        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
-        SettingsSecurity sec = new SettingsSecurity();
-        sec.setRelocation("./target/sec1.xml");
-        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
-            new SecurityConfigurationStaxWriter().write(fos, sec);
-        }
+    void prepare() throws IOException {
         saveSec("magic:mighty");
     }
 
     @Test
-    void testReadWithRelocation() throws Exception {
-        SettingsSecurity sec = SecUtil.read("./target/sec.xml", true);
-        assertNotNull(sec);
-        assertEquals("magic:mighty", sec.getMasterSource());
-        Map<String, String> conf = SecUtil.getConfig(sec, _confName);
-        assertNotNull(conf);
-        assertNotNull(conf.get(_propName));
-        assertEquals(_propVal, conf.get(_propName));
+    void readWrite() throws IOException {
+        Path path = Path.of("./target/sec.xml");
+        SettingsSecurity config = SecUtil.read(path);
+        assertNotNull(config);
+        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
+        assertEquals("magic:mighty", config.getMasterSource());
+        SecUtil.write(path, config, false);
+    }
+
+    @Test
+    void readWriteWithBackup() throws IOException {
+        Path path = Path.of("./target/sec.xml");
+        SettingsSecurity config = SecUtil.read(path);
+        assertNotNull(config);
+        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
+        assertEquals("magic:mighty", config.getMasterSource());
+        SecUtil.write(path, config, true);
+        assertTrue(Files.exists(path));
+        assertTrue(Files.exists(path.getParent().resolve(path.getFileName() + ".bak")));
     }
 }

@@ -17,19 +17,23 @@ import javax.xml.stream.XMLStreamException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxReader;
+import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 
 import static java.util.Objects.requireNonNull;
 
@@ -40,44 +44,25 @@ import static java.util.Objects.requireNonNull;
  * @version $Id$
  *
  */
-public class SecUtil {
+public final class SecUtil {
+    private SecUtil() {}
 
-    public static final String PROTOCOL_DELIM = "://";
-    public static final int PROTOCOL_DELIM_LEN = PROTOCOL_DELIM.length();
-    public static final String[] URL_PROTOCOLS =
-            new String[] {"http", "https", "dav", "file", "davs", "webdav", "webdavs", "dav+http", "dav+https"};
-
-    public static SettingsSecurity read(String location, boolean cycle) throws SecDispatcherException {
-        if (location == null) throw new SecDispatcherException("location to read from is null");
+    /**
+     * Reads the configuration model up, optionally resolving relocation too.
+     */
+    public static SettingsSecurity read(Path configurationFile) throws IOException {
+        requireNonNull(configurationFile, "configurationFile must not be null");
         SettingsSecurity sec;
         try {
-            try (InputStream in = toStream(location)) {
+            try (InputStream in = Files.newInputStream(configurationFile)) {
                 sec = new SecurityConfigurationStaxReader().read(in);
             }
-            if (cycle && sec.getRelocation() != null) return read(sec.getRelocation(), true);
             return sec;
         } catch (NoSuchFileException e) {
             return null;
-        } catch (IOException e) {
-            throw new SecDispatcherException("IO Problem", e);
         } catch (XMLStreamException e) {
-            throw new SecDispatcherException("Parsing error", e);
+            throw new IOException("Parsing error", e);
         }
-    }
-
-    private static InputStream toStream(String resource) throws IOException {
-        requireNonNull(resource, "resource is null");
-        int ind = resource.indexOf(PROTOCOL_DELIM);
-        if (ind > 1) {
-            String protocol = resource.substring(0, ind);
-            resource = resource.substring(ind + PROTOCOL_DELIM_LEN);
-            for (String p : URL_PROTOCOLS) {
-                if (protocol.regionMatches(true, 0, p, 0, p.length())) {
-                    return new URL(p + PROTOCOL_DELIM + resource).openStream();
-                }
-            }
-        }
-        return Files.newInputStream(Paths.get(resource));
     }
 
     public static Map<String, String> getConfig(SettingsSecurity sec, String name) {
@@ -101,5 +86,42 @@ public class SecUtil {
             }
         }
         return null;
+    }
+
+    private static final boolean IS_WINDOWS =
+            System.getProperty("os.name", "unknown").startsWith("Windows");
+
+    public static void write(Path target, SettingsSecurity configuration, boolean doBackup) throws IOException {
+        requireNonNull(target, "file must not be null");
+        requireNonNull(configuration, "configuration must not be null");
+        Path parent = requireNonNull(target.getParent(), "target must have parent");
+        Files.createDirectories(parent);
+        Path tempFile = parent.resolve(target.getFileName() + "."
+                + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".tmp");
+
+        configuration.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
+        configuration.setModelEncoding(StandardCharsets.UTF_8.name());
+
+        try {
+            try (OutputStream tempOut = Files.newOutputStream(tempFile)) {
+                new SecurityConfigurationStaxWriter().write(tempOut, configuration);
+            }
+
+            if (doBackup && Files.isRegularFile(target)) {
+                Files.copy(target, parent.resolve(target.getFileName() + ".bak"), StandardCopyOption.REPLACE_EXISTING);
+            }
+            if (IS_WINDOWS) {
+                try (InputStream is = Files.newInputStream(tempFile);
+                        OutputStream os = Files.newOutputStream(target)) {
+                    is.transferTo(os);
+                }
+            } else {
+                Files.move(tempFile, target, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (XMLStreamException e) {
+            throw new IOException("XML Processing error", e);
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
     }
 }
