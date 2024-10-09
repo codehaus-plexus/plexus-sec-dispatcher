@@ -82,7 +82,7 @@ public interface SecDispatcher {
      * Writes the effective configuration.
      *
      * @param configuration The configuration to write, may not be {@code null}
-     * x     * @throws IOException In case of IO problem
+     * @throws IOException In case of IO problem
      */
     void writeConfiguration(SettingsSecurity configuration) throws IOException;
 }

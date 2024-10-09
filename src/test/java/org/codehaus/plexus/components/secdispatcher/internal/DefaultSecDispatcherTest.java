@@ -66,7 +66,21 @@ public class DefaultSecDispatcherTest {
     }
 
     @Test
-    void testRoundTripWithDispatcher() throws Exception {
+    void masterWithEnvRoundTrip() throws Exception {
+        saveSec("master", Map.of("masterSource", "env:MASTER_PASSWORD", "masterCipher", AESGCMNoPadding.CIPHER_ALG));
+        DefaultSecDispatcher sd = construct();
+
+        assertEquals(1, sd.availableDispatchers().size());
+        String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
+        assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
+        assertTrue(encrypted.contains("name=master"));
+        assertTrue(encrypted.contains("a=b"));
+        String pass = sd.decrypt(encrypted);
+        assertEquals("supersecret", pass);
+    }
+
+    @Test
+    void masterWithSystemPropertyRoundTrip() throws Exception {
         saveSec(
                 "master",
                 Map.of("masterSource", "system-property:masterPassword", "masterCipher", AESGCMNoPadding.CIPHER_ALG));
