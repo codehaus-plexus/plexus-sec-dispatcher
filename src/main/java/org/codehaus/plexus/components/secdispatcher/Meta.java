@@ -76,7 +76,7 @@ public interface Meta {
     /**
      * The key of the item.
      */
-    String id();
+    String name();
 
     /**
      * Returns the display (human) name of the item.

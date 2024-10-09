@@ -31,18 +31,14 @@ import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.HexFormat;
-import java.util.List;
-import java.util.Map;
 
-import org.codehaus.plexus.components.secdispatcher.MasterMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-
-import static java.util.Objects.requireNonNull;
 
 /**
  * Password source that uses GnuPG Agent.
+ * <p>
+ * Config: {@code gpg-agent:$agentSocketPath[?non-interactive]}
  */
 @Singleton
 @Named(GpgAgentMasterSource.NAME)
@@ -51,45 +47,6 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport {
 
     public GpgAgentMasterSource() {
         super(NAME + ":");
-    }
-
-    @Override
-    public MasterMeta meta() {
-        return new MasterMeta() {
-            @Override
-            public String id() {
-                return NAME;
-            }
-
-            @Override
-            public String displayName() {
-                return "GPG Agent Source";
-            }
-
-            @Override
-            public Collection<Field> fields() {
-                return List.of(
-                        Field.builder("socketPath")
-                                .optional(false)
-                                .defaultValue(".gnupg/S.gpg-agent")
-                                .description("The GPG Agent socket path (if relative, resolved from user home)")
-                                .build(),
-                        Field.builder("non-interactive")
-                                .optional(true)
-                                .description(
-                                        "Whether to forbid GPG interaction (then only cached passphrase can be used)")
-                                .build());
-            }
-
-            @Override
-            public String createConfig(Map<String, String> data) {
-                String result = NAME + ":" + requireNonNull(data.get("socketPath"), "Incomplete config");
-                if (data.containsKey("interactive")) {
-                    result += "?non-interactive";
-                }
-                return result;
-            }
-        };
     }
 
     @Override

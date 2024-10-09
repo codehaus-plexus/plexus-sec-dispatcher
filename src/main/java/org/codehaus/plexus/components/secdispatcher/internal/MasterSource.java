@@ -13,18 +13,12 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import org.codehaus.plexus.components.secdispatcher.MasterMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Source of master password.
  */
 public interface MasterSource {
-    /**
-     * Returns the "meta" of this master source, never {@code null}.
-     */
-    MasterMeta meta();
-
     /**
      * Handles the URI to get master password. Implementation may do one of the following things:
      * <ul>

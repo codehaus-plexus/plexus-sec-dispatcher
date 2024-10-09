@@ -22,34 +22,22 @@ import java.util.Map;
 import org.codehaus.plexus.components.cipher.internal.AESGCMNoPadding;
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
-import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.TestDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterSource;
-import org.codehaus.plexus.components.secdispatcher.internal.sources.TestMasterSource;
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefaultSecDispatcherTest {
     String masterPassword = "masterPw";
     String password = "somePassword";
-
-    private void saveSec(String masterSource) throws Exception {
-        SettingsSecurity sec = new SettingsSecurity();
-        sec.setModelEncoding(StandardCharsets.UTF_8.name());
-        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
-        sec.setMasterSource(masterSource);
-        saveSec(sec);
-    }
 
     private void saveSec(String dispatcher, Map<String, String> config) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
@@ -70,7 +58,6 @@ public class DefaultSecDispatcherTest {
     private void saveSec(SettingsSecurity sec) throws Exception {
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
         sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
-        sec.setMasterCipher(AESGCMNoPadding.CIPHER_ALG);
 
         try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
             new SecurityConfigurationStaxWriter().write(fos, sec);
@@ -78,118 +65,37 @@ public class DefaultSecDispatcherTest {
         System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
     }
 
-    @BeforeEach
-    public void prepare() throws Exception {
-        saveSec("magic:might");
-    }
-
-    @Test
-    void testEncrypt() throws Exception {
-        saveSec("test:" + masterPassword);
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new TestMasterSource()),
-                Map.of(),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-        String enc = sd.encrypt(password, null);
-        assertNotNull(enc);
-        String password1 = sd.decrypt(enc);
-        assertEquals(password, password1);
-    }
-
-    @Test
-    void testDecrypt() throws Exception {
-        saveSec("test:" + masterPassword);
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new TestMasterSource()),
-                Map.of(),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-        String encrypted = sd.encrypt(password, null);
-        String pass = sd.decrypt(encrypted);
-        assertNotNull(pass);
-        assertEquals(password, pass);
-    }
-
-    @Test
-    void testDecryptSystemProperty() throws Exception {
-        System.setProperty("foobar", masterPassword);
-        saveSec("prop:foobar");
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of(
-                        "prop",
-                        new SystemPropertyMasterSource(),
-                        "env",
-                        new EnvMasterSource(),
-                        "gpg",
-                        new GpgAgentMasterSource()),
-                Map.of(),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-        String encrypted = sd.encrypt(password, null);
-        String pass = sd.decrypt(encrypted);
-        assertNotNull(pass);
-        assertEquals(password, pass);
-    }
-
-    @Test
-    void testDecryptEnv() throws Exception {
-        saveSec("env:MASTER_PASSWORD");
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of(
-                        "prop",
-                        new SystemPropertyMasterSource(),
-                        "env",
-                        new EnvMasterSource(),
-                        "gpg",
-                        new GpgAgentMasterSource()),
-                Map.of(),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-        String encrypted = sd.encrypt(password, null);
-        String pass = sd.decrypt(encrypted);
-        assertNotNull(pass);
-        assertEquals(password, pass);
-    }
-
-    @Disabled("triggers GPG agent: remove this and type in 'masterPw'")
-    @Test
-    void testDecryptGpg() throws Exception {
-        saveSec("gpg-agent:/run/user/1000/gnupg/S.gpg-agent");
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of(
-                        "prop",
-                        new SystemPropertyMasterSource(),
-                        "env",
-                        new EnvMasterSource(),
-                        "gpg",
-                        new GpgAgentMasterSource()),
-                Map.of(),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-        String encrypted = sd.encrypt(password, null);
-        String pass = sd.decrypt(encrypted);
-        assertNotNull(pass);
-        assertEquals(password, pass);
-    }
-
     @Test
     void testRoundTripWithDispatcher() throws Exception {
-        saveSec("magic", Map.of("salt", "foobar"));
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new TestMasterSource()),
-                Map.of("magic", new TestDispatcher()),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+        saveSec(
+                "master",
+                Map.of("masterSource", "system-property:masterPassword", "masterCipher", AESGCMNoPadding.CIPHER_ALG));
+        DefaultSecDispatcher sd = construct();
 
         assertEquals(1, sd.availableDispatchers().size());
-        String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "magic", "a", "b"));
+        String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
-        assertTrue(encrypted.contains("name=magic"));
+        assertTrue(encrypted.contains("name=master"));
         assertTrue(encrypted.contains("a=b"));
-        assertTrue(encrypted.contains("tercesrepus@foobar"));
-        // assertEquals("{[name=magic,a=b]tercesrepus@foobar}", encrypted);
         String pass = sd.decrypt(encrypted);
         assertEquals("supersecret", pass);
+    }
+
+    protected DefaultSecDispatcher construct() {
+        DefaultPlexusCipher dpc = new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding()));
+        return new DefaultSecDispatcher(
+                dpc,
+                Map.of(
+                        "master",
+                        new MasterDispatcher(
+                                dpc,
+                                Map.of(
+                                        EnvMasterSource.NAME,
+                                        new EnvMasterSource(),
+                                        SystemPropertyMasterSource.NAME,
+                                        new SystemPropertyMasterSource(),
+                                        GpgAgentMasterSource.NAME,
+                                        new GpgAgentMasterSource()))),
+                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
     }
 }

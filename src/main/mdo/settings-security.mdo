@@ -56,17 +56,24 @@
         </field>
         <field>
           <name>masterSource</name>
-          <version>3.0.0+</version>
+          <version>3.0.0/3.0.0</version>
           <type>String</type>
           <required>true</required>
           <description>The masterSource describes the source of the master password</description>
         </field>
         <field>
           <name>masterCipher</name>
-          <version>3.0.0+</version>
+          <version>3.0.0/3.0.0</version>
           <type>String</type>
           <required>true</required>
           <description>The Cipher to be used for master password</description>
+        </field>
+        <field>
+          <name>defaultDispatcher</name>
+          <version>4.0.0+</version>
+          <type>String</type>
+          <required>true</required>
+          <description>The default dispatcher to be used when no dispatcher name provided</description>
         </field>
         <field>
           <name>configurations</name>
