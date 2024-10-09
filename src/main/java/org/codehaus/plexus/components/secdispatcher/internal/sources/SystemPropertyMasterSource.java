@@ -21,18 +21,53 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.codehaus.plexus.components.secdispatcher.MasterMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Password source that uses env.
  */
 @Singleton
-@Named(SystemPropertyMasterPasswordSource.NAME)
-public final class SystemPropertyMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
+@Named(SystemPropertyMasterSource.NAME)
+public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport {
     public static final String NAME = "prop";
 
-    public SystemPropertyMasterPasswordSource() {
+    public SystemPropertyMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public MasterMeta meta() {
+        return new MasterMeta() {
+            @Override
+            public String id() {
+                return NAME;
+            }
+
+            @Override
+            public String displayName() {
+                return "Java System Property Source";
+            }
+
+            @Override
+            public Collection<Field> fields() {
+                return List.of(Field.builder("name")
+                        .optional(false)
+                        .description("Name of the Java System property")
+                        .build());
+            }
+
+            @Override
+            public String createConfig(Map<String, String> data) {
+                return NAME + ":" + requireNonNull(data.get("name"), "Config incomplete");
+            }
+        };
     }
 
     @Override

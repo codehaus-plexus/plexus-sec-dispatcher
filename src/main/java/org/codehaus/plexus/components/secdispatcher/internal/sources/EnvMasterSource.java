@@ -21,18 +21,53 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import org.codehaus.plexus.components.secdispatcher.MasterMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Password source that uses env.
  */
 @Singleton
-@Named(EnvMasterPasswordSource.NAME)
-public final class EnvMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
+@Named(EnvMasterSource.NAME)
+public final class EnvMasterSource extends PrefixMasterSourceSupport {
     public static final String NAME = "env";
 
-    public EnvMasterPasswordSource() {
+    public EnvMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public MasterMeta meta() {
+        return new MasterMeta() {
+            @Override
+            public String id() {
+                return NAME;
+            }
+
+            @Override
+            public String displayName() {
+                return "Environment Variable Source";
+            }
+
+            @Override
+            public Collection<Field> fields() {
+                return List.of(Field.builder("name")
+                        .optional(false)
+                        .description("Name of the environment variable")
+                        .build());
+            }
+
+            @Override
+            public String createConfig(Map<String, String> data) {
+                return NAME + ":" + requireNonNull(data.get("name"), "Config incomplete");
+            }
+        };
     }
 
     @Override

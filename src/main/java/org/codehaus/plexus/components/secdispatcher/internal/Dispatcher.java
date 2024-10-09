@@ -15,6 +15,7 @@ package org.codehaus.plexus.components.secdispatcher.internal;
 
 import java.util.Map;
 
+import org.codehaus.plexus.components.secdispatcher.Meta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -31,6 +32,11 @@ public interface Dispatcher {
      * if it requires it.
      */
     String CONF_MASTER_PASSWORD = "masterPassword";
+
+    /**
+     * The metadata of this dispatcher.
+     */
+    Meta meta();
 
     /**
      * encrypt given plaintext string

@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.MasterMeta;
+import org.codehaus.plexus.components.secdispatcher.Meta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
@@ -44,30 +46,36 @@ public class DefaultSecDispatcher implements SecDispatcher {
     public static final String ATTR_STOP = "]";
 
     protected final PlexusCipher cipher;
-    protected final Map<String, MasterPasswordSource> masterPasswordSources;
+    protected final Map<String, MasterSource> masterSources;
     protected final Map<String, Dispatcher> dispatchers;
     protected final String configurationFile;
 
     @Inject
     public DefaultSecDispatcher(
             PlexusCipher cipher,
-            Map<String, MasterPasswordSource> masterPasswordSources,
+            Map<String, MasterSource> masterSources,
             Map<String, Dispatcher> dispatchers,
             @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
         this.cipher = requireNonNull(cipher);
-        this.masterPasswordSources = requireNonNull(masterPasswordSources);
+        this.masterSources = requireNonNull(masterSources);
         this.dispatchers = requireNonNull(dispatchers);
         this.configurationFile = requireNonNull(configurationFile);
     }
 
     @Override
-    public Set<String> availableDispatchers() {
-        return Set.copyOf(dispatchers.keySet());
+    public Set<Meta> availableDispatchers() {
+        return Set.copyOf(dispatchers.values().stream().map(Dispatcher::meta).collect(Collectors.toSet()));
     }
 
     @Override
     public Set<String> availableCiphers() {
         return cipher.availableCiphers();
+    }
+
+    @Override
+    public Set<MasterMeta> availableMasterSourcesMetadata() {
+        return Set.copyOf(
+                masterSources.values().stream().map(MasterSource::meta).collect(Collectors.toSet()));
     }
 
     @Override
@@ -204,12 +212,12 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     private String getMasterPassword(SettingsSecurity sec, boolean mandatory) throws SecDispatcherException {
-        if (sec == null && !mandatory) {
+        if ((sec == null || sec.getMasterSource() == null) && !mandatory) {
             return null;
         }
         requireNonNull(sec, "configuration is null");
         String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
-        for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
+        for (MasterSource masterPasswordSource : masterSources.values()) {
             String masterPassword = masterPasswordSource.handle(masterSource);
             if (masterPassword != null) return masterPassword;
         }

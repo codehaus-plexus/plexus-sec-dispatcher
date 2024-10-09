@@ -46,14 +46,19 @@ public interface SecDispatcher {
     String DISPATCHER_NAME_ATTR = "name";
 
     /**
-     * Returns the set of available dispatcher names, never {@code null}.
+     * Returns the set of available dispatcher metadata, never {@code null}.
      */
-    Set<String> availableDispatchers();
+    Set<Meta> availableDispatchers();
 
     /**
      * Returns the set of available ciphers, never {@code null}.
      */
     Set<String> availableCiphers();
+
+    /**
+     * Returns the set of available master password sources metadata, never {@code null}.
+     */
+    Set<MasterMeta> availableMasterSourcesMetadata();
 
     /**
      * Encrypt given plaintext string.
@@ -87,7 +92,7 @@ public interface SecDispatcher {
      * Writes the effective configuration.
      *
      * @param configuration The configuration to write, may not be {@code null}
-     * @throws IOException In case of IO problem
+     * x     * @throws IOException In case of IO problem
      */
     void writeConfiguration(SettingsSecurity configuration) throws IOException;
 }

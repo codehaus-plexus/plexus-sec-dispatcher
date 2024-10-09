@@ -25,11 +25,13 @@ import org.codehaus.plexus.components.cipher.internal.AESGCMNoPadding;
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.dispatcher.StaticDispatcher;
-import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterPasswordSource;
-import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterPasswordSource;
-import org.codehaus.plexus.components.secdispatcher.internal.sources.StaticMasterPasswordSource;
-import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterPasswordSource;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.TestDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
+import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource;
+import org.codehaus.plexus.components.secdispatcher.internal.sources.TestMasterSource;
+import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterSource;
+import org.codehaus.plexus.components.secdispatcher.model.Config;
+import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +51,28 @@ public class DefaultSecDispatcherTest {
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
         sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         sec.setMasterSource(masterSource);
+        saveSec(sec);
+    }
+
+    private void saveSec(String dispatcher, Map<String, String> config) throws Exception {
+        SettingsSecurity sec = new SettingsSecurity();
+        sec.setModelEncoding(StandardCharsets.UTF_8.name());
+        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
+        Config conf = new Config();
+        conf.setName(dispatcher);
+        for (Map.Entry<String, String> entry : config.entrySet()) {
+            ConfigProperty prop = new ConfigProperty();
+            prop.setName(entry.getKey());
+            prop.setValue(entry.getValue());
+            conf.addProperty(prop);
+        }
+        sec.getConfigurations().add(conf);
+        saveSec(sec);
+    }
+
+    private void saveSec(SettingsSecurity sec) throws Exception {
+        sec.setModelEncoding(StandardCharsets.UTF_8.name());
+        sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
         sec.setMasterCipher(AESGCMNoPadding.CIPHER_ALG);
 
         try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
@@ -64,9 +88,10 @@ public class DefaultSecDispatcherTest {
 
     @Test
     void testEncrypt() throws Exception {
+        saveSec("test:" + masterPassword);
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
+                Map.of("static", new TestMasterSource()),
                 Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
         String enc = sd.encrypt(password, null);
@@ -77,9 +102,10 @@ public class DefaultSecDispatcherTest {
 
     @Test
     void testDecrypt() throws Exception {
+        saveSec("test:" + masterPassword);
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
+                Map.of("static", new TestMasterSource()),
                 Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
         String encrypted = sd.encrypt(password, null);
@@ -96,11 +122,11 @@ public class DefaultSecDispatcherTest {
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
                 Map.of(
                         "prop",
-                        new SystemPropertyMasterPasswordSource(),
+                        new SystemPropertyMasterSource(),
                         "env",
-                        new EnvMasterPasswordSource(),
+                        new EnvMasterSource(),
                         "gpg",
-                        new GpgAgentMasterPasswordSource()),
+                        new GpgAgentMasterSource()),
                 Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
         String encrypted = sd.encrypt(password, null);
@@ -116,11 +142,11 @@ public class DefaultSecDispatcherTest {
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
                 Map.of(
                         "prop",
-                        new SystemPropertyMasterPasswordSource(),
+                        new SystemPropertyMasterSource(),
                         "env",
-                        new EnvMasterPasswordSource(),
+                        new EnvMasterSource(),
                         "gpg",
-                        new GpgAgentMasterPasswordSource()),
+                        new GpgAgentMasterSource()),
                 Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
         String encrypted = sd.encrypt(password, null);
@@ -137,11 +163,11 @@ public class DefaultSecDispatcherTest {
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
                 Map.of(
                         "prop",
-                        new SystemPropertyMasterPasswordSource(),
+                        new SystemPropertyMasterSource(),
                         "env",
-                        new EnvMasterPasswordSource(),
+                        new EnvMasterSource(),
                         "gpg",
-                        new GpgAgentMasterPasswordSource()),
+                        new GpgAgentMasterSource()),
                 Map.of(),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
         String encrypted = sd.encrypt(password, null);
@@ -151,70 +177,22 @@ public class DefaultSecDispatcherTest {
     }
 
     @Test
-    void testEncryptWithDispatcher() throws Exception {
+    void testRoundTripWithDispatcher() throws Exception {
+        saveSec("magic", Map.of("salt", "foobar"));
         DefaultSecDispatcher sd = new DefaultSecDispatcher(
                 new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
-                Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
+                Map.of("static", new TestMasterSource()),
+                Map.of("magic", new TestDispatcher()),
                 DefaultSecDispatcher.DEFAULT_CONFIGURATION);
 
-        assertEquals(Set.of("magic"), sd.availableDispatchers());
-        String enc = sd.encrypt("whatever", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "magic", "a", "b"));
-        assertNotNull(enc);
-        assertTrue(enc.contains("encrypted"));
-        assertTrue(enc.contains(SecDispatcher.DISPATCHER_NAME_ATTR + "=magic"));
-        String password1 = sd.decrypt(enc);
-        assertEquals("decrypted", password1);
-    }
-
-    @Test
-    void testDecryptWithDispatcher() throws Exception {
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
-                Map.of("magic", new StaticDispatcher("decrypted", "encrypted")),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-
-        assertEquals(Set.of("magic"), sd.availableDispatchers());
-        String pass = sd.decrypt("{" + "[a=b," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]"
-                + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8)) + "}");
-        assertNotNull(pass);
-        assertEquals("decrypted", pass);
-    }
-
-    @Test
-    void testDecryptWithDispatcherConf() throws Exception {
-        String bare = Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8));
-        DefaultSecDispatcher sd = new DefaultSecDispatcher(
-                new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding())),
-                Map.of("static", new StaticMasterPasswordSource(masterPassword)),
-                Map.of("magic", new Dispatcher() {
-                    @Override
-                    public String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
-                            throws SecDispatcherException {
-                        throw new IllegalStateException("should not be called");
-                    }
-
-                    @Override
-                    public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
-                            throws SecDispatcherException {
-                        assertEquals(bare, str);
-                        assertEquals(2, attributes.size());
-                        assertEquals("magic", attributes.get(SecDispatcher.DISPATCHER_NAME_ATTR));
-                        assertEquals("value", attributes.get("key"));
-
-                        assertEquals(1, config.size());
-                        assertEquals(masterPassword, config.get(Dispatcher.CONF_MASTER_PASSWORD));
-
-                        return "magic";
-                    }
-                }),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
-
-        assertEquals(Set.of("magic"), sd.availableDispatchers());
-        String pass = sd.decrypt("{" + "[key=value," + SecDispatcher.DISPATCHER_NAME_ATTR + "=magic]"
-                + Base64.getEncoder().encodeToString("whatever".getBytes(StandardCharsets.UTF_8)) + "}");
-        assertNotNull(pass);
-        assertEquals("magic", pass);
+        assertEquals(1, sd.availableDispatchers().size());
+        String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "magic", "a", "b"));
+        assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
+        assertTrue(encrypted.contains("name=magic"));
+        assertTrue(encrypted.contains("a=b"));
+        assertTrue(encrypted.contains("tercesrepus@foobar"));
+        assertEquals("{[name=magic,a=b]tercesrepus@foobar}", encrypted);
+        String pass = sd.decrypt(encrypted);
+        assertEquals("supersecret", pass);
     }
 }

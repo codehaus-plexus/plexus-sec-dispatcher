@@ -22,18 +22,18 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
+import org.codehaus.plexus.components.secdispatcher.internal.MasterSource;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * Master password source support class.
  */
-public abstract class MasterPasswordSourceSupport implements MasterPasswordSource {
+public abstract class MasterSourceSupport implements MasterSource {
     private final Predicate<String> matcher;
     private final Function<String, String> transformer;
 
-    public MasterPasswordSourceSupport(Predicate<String> matcher, Function<String, String> transformer) {
+    public MasterSourceSupport(Predicate<String> matcher, Function<String, String> transformer) {
         this.matcher = requireNonNull(matcher);
         this.transformer = requireNonNull(transformer);
     }
