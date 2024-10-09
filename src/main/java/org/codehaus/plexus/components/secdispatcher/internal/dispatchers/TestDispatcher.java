@@ -13,15 +13,16 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.dispatchers;
 
-import org.codehaus.plexus.components.secdispatcher.Meta;
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.Dispatcher;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+
+import org.codehaus.plexus.components.secdispatcher.Meta;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.Dispatcher;
 
 /**
  * This dispatcher is purely for test purposes, is obviously NOT a true encryption implementation.
@@ -63,12 +64,14 @@ public class TestDispatcher implements Dispatcher {
     }
 
     @Override
-    public String encrypt(String str, Map<String, String> attributes, Map<String, String> config) throws SecDispatcherException {
+    public String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
+            throws SecDispatcherException {
         return new StringBuilder(str).reverse() + "@" + getSalt(config);
     }
 
     @Override
-    public String decrypt(String str, Map<String, String> attributes, Map<String, String> config) throws SecDispatcherException {
+    public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
+            throws SecDispatcherException {
         return new StringBuilder(str).reverse().substring(getSalt(config).length() + 1);
     }
 }

@@ -1,7 +1,6 @@
 package org.codehaus.plexus.components.secdispatcher;
 
 import java.util.Collection;
-import java.util.Map;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;

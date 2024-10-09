@@ -13,15 +13,15 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.MasterMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-
-import javax.inject.Named;
-import javax.inject.Singleton;
 
 import static java.util.Objects.requireNonNull;
 
