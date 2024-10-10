@@ -53,7 +53,7 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implem
 
     @Override
     public String description() {
-        return "Interacts with GPG Agent via domain socket to get the master password";
+        return "GPG Agent";
     }
 
     @Override

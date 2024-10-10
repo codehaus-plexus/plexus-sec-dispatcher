@@ -42,7 +42,7 @@ public final class EnvMasterSource extends PrefixMasterSourceSupport implements 
 
     @Override
     public String description() {
-        return "Extracts the master password out of environment variables with configured name";
+        return "Environment variable";
     }
 
     @Override

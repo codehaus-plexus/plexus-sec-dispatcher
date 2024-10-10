@@ -66,10 +66,11 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         return List.of(
                 Field.builder(MASTER_SOURCE)
                         .optional(false)
-                        .description("The source of master password")
+                        .description("Source of the master password")
                         .options(masterSources.entrySet().stream()
                                 .map(e -> {
-                                    if (e instanceof MasterSourceMeta m) {
+                                    MasterSource ms = e.getValue();
+                                    if (ms instanceof MasterSourceMeta m) {
                                         Field.Builder b =
                                                 Field.builder(e.getKey()).description(m.description());
                                         if (m.configTemplate().isPresent()) {
@@ -79,7 +80,8 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
                                         return b.build();
                                     } else {
                                         return Field.builder(e.getKey())
-                                                .description("Field not described (needs manual configuration)")
+                                                .description(e.getKey()
+                                                        + "(Field not described, needs manual configuration)")
                                                 .build();
                                     }
                                 })
@@ -87,7 +89,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
                         .build(),
                 Field.builder(MASTER_CIPHER)
                         .optional(false)
-                        .description("The cipher to use with master password")
+                        .description("Cipher to use with master password")
                         .options(cipher.availableCiphers().stream()
                                 .map(c -> Field.builder(c).description(c).build())
                                 .toList())

@@ -42,7 +42,7 @@ public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport 
 
     @Override
     public String description() {
-        return "Extracts the master password out of Java System properties with configured key";
+        return "Java System properties";
     }
 
     @Override
