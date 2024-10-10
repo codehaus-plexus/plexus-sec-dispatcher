@@ -35,9 +35,16 @@
   <properties>
     <javaVersion>17</javaVersion>
     <project.build.outputTimestamp>2024-09-29T15:16:00Z</project.build.outputTimestamp>
+
+    <version.slf4j>2.0.16</version.slf4j>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${version.slf4j}</version>
+    </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cipher</artifactId>
@@ -61,6 +68,11 @@
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${version.slf4j}</version>
     </dependency>
   </dependencies>
 

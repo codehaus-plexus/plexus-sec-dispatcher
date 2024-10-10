@@ -38,7 +38,15 @@ public class SourcesTest {
     @Test
     void gpgAgent() {
         GpgAgentMasterSource source = new GpgAgentMasterSource();
-        // ypu may adjust path, this is Fedora40 WS. Ubuntu does `.gpg/S.gpg-agent`
+        // you may adjust path, this is Fedora40 WS. Ubuntu does `.gpg/S.gpg-agent`
         assertEquals("masterPw", source.handle("gpg-agent:/run/user/1000/gnupg/S.gpg-agent"));
+    }
+
+    @Disabled("enable and type in 'masterPw'")
+    @Test
+    void pinEntry() {
+        PinEntryMasterSource source = new PinEntryMasterSource();
+        // ypu may adjust path, this is Fedora40 WS + gnome
+        assertEquals("masterPw", source.handle("pinentry-prompt:/usr/bin/pinentry-gnome3"));
     }
 }
