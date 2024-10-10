@@ -20,14 +20,19 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.Dispatcher;
+import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
@@ -44,30 +49,48 @@ public class DefaultSecDispatcher implements SecDispatcher {
     public static final String ATTR_STOP = "]";
 
     protected final PlexusCipher cipher;
-    protected final Map<String, MasterPasswordSource> masterPasswordSources;
     protected final Map<String, Dispatcher> dispatchers;
     protected final String configurationFile;
 
     @Inject
     public DefaultSecDispatcher(
             PlexusCipher cipher,
-            Map<String, MasterPasswordSource> masterPasswordSources,
             Map<String, Dispatcher> dispatchers,
             @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
         this.cipher = requireNonNull(cipher);
-        this.masterPasswordSources = requireNonNull(masterPasswordSources);
         this.dispatchers = requireNonNull(dispatchers);
         this.configurationFile = requireNonNull(configurationFile);
     }
 
     @Override
-    public Set<String> availableDispatchers() {
-        return Set.copyOf(dispatchers.keySet());
+    public Set<DispatcherMeta> availableDispatchers() {
+        return Set.copyOf(
+                dispatchers.entrySet().stream().map(this::dispatcherMeta).collect(Collectors.toSet()));
     }
 
-    @Override
-    public Set<String> availableCiphers() {
-        return cipher.availableCiphers();
+    private DispatcherMeta dispatcherMeta(Map.Entry<String, Dispatcher> dispatcher) {
+        // sisu components are lazy!
+        Dispatcher d = dispatcher.getValue();
+        if (d instanceof DispatcherMeta meta) {
+            return meta;
+        } else {
+            return new DispatcherMeta() {
+                @Override
+                public String name() {
+                    return dispatcher.getKey();
+                }
+
+                @Override
+                public String displayName() {
+                    return dispatcher.getKey() + " (needs manual configuration)";
+                }
+
+                @Override
+                public Collection<Field> fields() {
+                    return List.of();
+                }
+            };
+        }
     }
 
     @Override
@@ -75,22 +98,31 @@ public class DefaultSecDispatcher implements SecDispatcher {
         if (isEncryptedString(str)) return str;
 
         try {
-            String res;
-            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                SettingsSecurity sec = getConfiguration(true);
-                String master = getMasterPassword(sec, true);
-                res = cipher.encrypt(getMasterCipher(sec), str, master);
+            if (attr == null) {
+                attr = new HashMap<>();
             } else {
-                String type = attr.get(DISPATCHER_NAME_ATTR);
-                Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
-                res = ATTR_START
-                        + attr.entrySet().stream()
-                                .map(e -> e.getKey() + "=" + e.getValue())
-                                .collect(Collectors.joining(","))
-                        + ATTR_STOP;
-                res += dispatcher.encrypt(str, attr, prepareDispatcherConfig(type));
+                attr = new HashMap<>(attr);
             }
+            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
+                attr.put(
+                        DISPATCHER_NAME_ATTR,
+                        requireNonNull(
+                                getConfiguration().getDefaultDispatcher(),
+                                "no default dispatcher set in configuration"));
+            }
+            String name = attr.get(DISPATCHER_NAME_ATTR);
+            Dispatcher dispatcher = dispatchers.get(name);
+            if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
+            Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
+            if (!Objects.equals(payload.getAttributes().get(DISPATCHER_NAME_ATTR), name)) {
+                throw new SecDispatcherException("Dispatcher " + name + " bug: mismatched name attribute");
+            }
+            String res = ATTR_START
+                    + payload.getAttributes().entrySet().stream()
+                            .map(e -> e.getKey() + "=" + e.getValue())
+                            .collect(Collectors.joining(","))
+                    + ATTR_STOP;
+            res += payload.getEncrypted();
             return cipher.decorate(res);
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
@@ -102,17 +134,14 @@ public class DefaultSecDispatcher implements SecDispatcher {
         if (!isEncryptedString(str)) return str;
         try {
             String bare = cipher.unDecorate(str);
-            Map<String, String> attr = stripAttributes(bare);
-            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                SettingsSecurity sec = getConfiguration(true);
-                String master = getMasterPassword(sec, true);
-                return cipher.decrypt(getMasterCipher(sec), bare, master);
-            } else {
-                String type = attr.get(DISPATCHER_NAME_ATTR);
-                Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
-                return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(type));
+            Map<String, String> attr = requireNonNull(stripAttributes(bare));
+            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
+                throw new SecDispatcherException("malformed password: no attribute with name");
             }
+            String name = attr.get(DISPATCHER_NAME_ATTR);
+            Dispatcher dispatcher = dispatchers.get(name);
+            if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
+            return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
@@ -135,12 +164,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     private Map<String, String> prepareDispatcherConfig(String type) {
         HashMap<String, String> dispatcherConf = new HashMap<>();
-        SettingsSecurity sec = getConfiguration(false);
-        String master = getMasterPassword(sec, false);
-        if (master != null) {
-            dispatcherConf.put(Dispatcher.CONF_MASTER_PASSWORD, master);
-        }
-        Map<String, String> conf = SecUtil.getConfig(sec, type);
+        Map<String, String> conf = SecUtil.getConfig(getConfiguration(), type);
         if (conf != null) {
             dispatcherConf.putAll(conf);
         }
@@ -157,6 +181,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     private Map<String, String> stripAttributes(String str) {
+        HashMap<String, String> result = new HashMap<>();
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
@@ -164,20 +189,17 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (stop == start + 1) return null;
             String attrs = str.substring(start + 1, stop).trim();
             if (attrs.isEmpty()) return null;
-            Map<String, String> res = null;
             StringTokenizer st = new StringTokenizer(attrs, ",");
             while (st.hasMoreTokens()) {
-                if (res == null) res = new HashMap<>(st.countTokens());
                 String pair = st.nextToken();
                 int pos = pair.indexOf('=');
                 if (pos == -1) throw new SecDispatcherException("Attribute malformed: " + pair);
                 String key = pair.substring(0, pos).trim();
                 String val = pair.substring(pos + 1).trim();
-                res.put(key, val);
+                result.put(key, val);
             }
-            return res;
         }
-        return null;
+        return result;
     }
 
     private boolean isEncryptedString(String str) {
@@ -191,38 +213,16 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return Paths.get(location);
     }
 
-    private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
+    private SettingsSecurity getConfiguration() throws SecDispatcherException {
         Path path = getConfigurationPath();
         try {
             SettingsSecurity sec = SecUtil.read(path);
-            if (mandatory && sec == null)
+            if (sec == null)
                 throw new SecDispatcherException("Please check that configuration file on path " + path + " exists");
             return sec;
         } catch (IOException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
-    }
-
-    private String getMasterPassword(SettingsSecurity sec, boolean mandatory) throws SecDispatcherException {
-        if (sec == null && !mandatory) {
-            return null;
-        }
-        requireNonNull(sec, "configuration is null");
-        String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
-        for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
-            String masterPassword = masterPasswordSource.handle(masterSource);
-            if (masterPassword != null) return masterPassword;
-        }
-        if (mandatory) {
-            throw new SecDispatcherException("master password could not be fetched");
-        } else {
-            return null;
-        }
-    }
-
-    private String getMasterCipher(SettingsSecurity sec) throws SecDispatcherException {
-        requireNonNull(sec, "configuration is null");
-        return requireNonNull(sec.getMasterCipher(), "masterCipher is null");
     }
 
     public String getConfigurationFile() {

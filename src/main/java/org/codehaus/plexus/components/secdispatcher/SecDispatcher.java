@@ -20,7 +20,7 @@ import java.util.Set;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 
 /**
- * This component decrypts a string, passed to it
+ * This component decrypts a string, passed to it using various dispatchers.
  *
  * @author Oleg Gusakov
  */
@@ -46,14 +46,9 @@ public interface SecDispatcher {
     String DISPATCHER_NAME_ATTR = "name";
 
     /**
-     * Returns the set of available dispatcher names, never {@code null}.
+     * Returns the set of available dispatcher metadata, never {@code null}.
      */
-    Set<String> availableDispatchers();
-
-    /**
-     * Returns the set of available ciphers, never {@code null}.
-     */
-    Set<String> availableCiphers();
+    Set<DispatcherMeta> availableDispatchers();
 
     /**
      * Encrypt given plaintext string.

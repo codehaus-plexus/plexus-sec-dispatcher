@@ -21,18 +21,33 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.Optional;
+
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Password source that uses env.
+ * <p>
+ * Config: {@code system-property:$systemPropertyName}
  */
 @Singleton
-@Named(SystemPropertyMasterPasswordSource.NAME)
-public final class SystemPropertyMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
-    public static final String NAME = "prop";
+@Named(SystemPropertyMasterSource.NAME)
+public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
+    public static final String NAME = "system-property";
 
-    public SystemPropertyMasterPasswordSource() {
+    public SystemPropertyMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "Java System properties";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":" + "$systemProperty");
     }
 
     @Override

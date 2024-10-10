@@ -32,19 +32,33 @@ import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HexFormat;
+import java.util.Optional;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Password source that uses GnuPG Agent.
+ * <p>
+ * Config: {@code gpg-agent:$agentSocketPath[?non-interactive]}
  */
 @Singleton
-@Named(GpgAgentMasterPasswordSource.NAME)
-public final class GpgAgentMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
+@Named(GpgAgentMasterSource.NAME)
+public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
     public static final String NAME = "gpg-agent";
 
-    public GpgAgentMasterPasswordSource() {
+    public GpgAgentMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "GPG Agent";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":" + "$agentSocketPath");
     }
 
     @Override

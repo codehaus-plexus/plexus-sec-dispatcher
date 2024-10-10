@@ -21,18 +21,33 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.Optional;
+
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Password source that uses env.
+ * <p>
+ * Config: {@code env:$ENVIRONMENT_VARIABLE_NAME}
  */
 @Singleton
-@Named(EnvMasterPasswordSource.NAME)
-public final class EnvMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
+@Named(EnvMasterSource.NAME)
+public final class EnvMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
     public static final String NAME = "env";
 
-    public EnvMasterPasswordSource() {
+    public EnvMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "Environment variable";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":" + "ENV_VARIABLE");
     }
 
     @Override

@@ -11,22 +11,22 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.codehaus.plexus.components.secdispatcher.internal.sources;
+package org.codehaus.plexus.components.secdispatcher;
 
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
+import java.util.Optional;
 
-import static java.util.Objects.requireNonNull;
+/**
+ * Source of master password.
+ */
+public interface MasterSourceMeta {
+    /**
+     * String describing what this source does.
+     */
+    String description();
 
-public class StaticMasterPasswordSource implements MasterPasswordSource {
-    private final String masterPassword;
-
-    public StaticMasterPasswordSource(String masterPassword) {
-        this.masterPassword = requireNonNull(masterPassword);
-    }
-
-    @Override
-    public String handle(String masterSource) throws SecDispatcherException {
-        return masterPassword;
-    }
+    /**
+     * Optional "config template" that may serve as basis to configure this master source. The template cannot be
+     * "reused" as is as configuration.
+     */
+    Optional<String> configTemplate();
 }
