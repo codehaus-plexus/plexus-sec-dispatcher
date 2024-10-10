@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.HexFormat;
 import java.util.Optional;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -43,7 +44,7 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  */
 @Singleton
 @Named(GpgAgentMasterSource.NAME)
-public final class GpgAgentMasterSource extends PrefixMasterSourceSupport {
+public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
     public static final String NAME = "gpg-agent";
 
     public GpgAgentMasterSource() {

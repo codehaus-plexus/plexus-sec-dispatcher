@@ -24,18 +24,19 @@ import java.util.Map;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
+import org.codehaus.plexus.components.secdispatcher.MasterSource;
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.Dispatcher;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterSource;
 
 /**
  * This dispatcher is logically equivalent (but much more secure) that Maven3 "master password" encryption.
  */
 @Singleton
 @Named(MasterDispatcher.NAME)
-public class MasterDispatcher implements Dispatcher {
+public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     public static final String NAME = "master";
 
     private static final String MASTER_CIPHER = "cipher";
@@ -51,48 +52,46 @@ public class MasterDispatcher implements Dispatcher {
     }
 
     @Override
-    public DispatcherMeta meta() {
-        return new DispatcherMeta() {
-            @Override
-            public String name() {
-                return NAME;
-            }
+    public String name() {
+        return NAME;
+    }
 
-            @Override
-            public String displayName() {
-                return "Master Password Dispatcher";
-            }
+    @Override
+    public String displayName() {
+        return "Master Password Dispatcher";
+    }
 
-            @Override
-            public Collection<Field> fields() {
-                return List.of(
-                        Field.builder(MASTER_SOURCE)
-                                .optional(false)
-                                .description("The source of master password")
-                                .options(masterSources.entrySet().stream()
-                                        .map(e -> {
-                                            Field.Builder b = Field.builder(e.getKey())
-                                                    .description(e.getValue().description());
-                                            if (e.getValue().configTemplate().isPresent()) {
-                                                b = b.defaultValue(e.getValue()
-                                                        .configTemplate()
-                                                        .get());
-                                            }
-                                            return b.build();
-                                        })
-                                        .toList())
-                                .build(),
-                        Field.builder(MASTER_CIPHER)
-                                .optional(false)
-                                .description("The cipher to use with master password")
-                                .options(cipher.availableCiphers().stream()
-                                        .map(c -> Field.builder(c)
-                                                .description("Cipher implementation " + c)
-                                                .build())
-                                        .toList())
-                                .build());
-            }
-        };
+    @Override
+    public Collection<Field> fields() {
+        return List.of(
+                Field.builder(MASTER_SOURCE)
+                        .optional(false)
+                        .description("The source of master password")
+                        .options(masterSources.entrySet().stream()
+                                .map(e -> {
+                                    if (e instanceof MasterSourceMeta m) {
+                                        Field.Builder b =
+                                                Field.builder(e.getKey()).description(m.description());
+                                        if (m.configTemplate().isPresent()) {
+                                            b = b.defaultValue(
+                                                    m.configTemplate().get());
+                                        }
+                                        return b.build();
+                                    } else {
+                                        return Field.builder(e.getKey())
+                                                .description("Field not described (needs manual configuration)")
+                                                .build();
+                                    }
+                                })
+                                .toList())
+                        .build(),
+                Field.builder(MASTER_CIPHER)
+                        .optional(false)
+                        .description("The cipher to use with master password")
+                        .options(cipher.availableCiphers().stream()
+                                .map(c -> Field.builder(c).description(c).build())
+                                .toList())
+                        .build());
     }
 
     @Override

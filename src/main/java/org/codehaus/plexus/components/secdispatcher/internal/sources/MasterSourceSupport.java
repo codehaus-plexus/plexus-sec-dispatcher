@@ -21,8 +21,8 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSource;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterSource;
 
 import static java.util.Objects.requireNonNull;
 

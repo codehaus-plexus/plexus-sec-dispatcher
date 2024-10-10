@@ -11,16 +11,14 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.codehaus.plexus.components.secdispatcher.internal;
+package org.codehaus.plexus.components.secdispatcher;
 
 import java.util.Optional;
-
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Source of master password.
  */
-public interface MasterSource {
+public interface MasterSourceMeta {
     /**
      * String describing what this source does.
      */
@@ -31,18 +29,4 @@ public interface MasterSource {
      * "reused" as is as configuration.
      */
     Optional<String> configTemplate();
-
-    /**
-     * Handles the config to get master password. Implementation may do one of the following things:
-     * <ul>
-     *     <li>if the config cannot be handled by given source, return {@code null}</li>
-     *     <li>otherwise, if master password retrieval based on config was attempted but failed, throw {@link SecDispatcherException}</li>
-     *     <li>happy path: return the master password.</li>
-     * </ul>
-     *
-     * @param config the source of master password, and opaque string.
-     * @return the master password, or {@code null} if implementation does not handle this config
-     * @throws SecDispatcherException If implementation does handle this masterSource, but cannot obtain master password
-     */
-    String handle(String config) throws SecDispatcherException;
 }

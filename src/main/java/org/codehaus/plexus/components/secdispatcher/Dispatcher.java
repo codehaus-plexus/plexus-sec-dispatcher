@@ -11,12 +11,9 @@
  * See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
  */
 
-package org.codehaus.plexus.components.secdispatcher.internal;
+package org.codehaus.plexus.components.secdispatcher;
 
 import java.util.Map;
-
-import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 import static java.util.Objects.requireNonNull;
 
@@ -48,11 +45,6 @@ public interface Dispatcher {
             return encrypted;
         }
     }
-
-    /**
-     * The metadata of this dispatcher.
-     */
-    DispatcherMeta meta();
 
     /**
      * Encrypt given plaintext string. Implementation must return at least same attributes it got, but may add more

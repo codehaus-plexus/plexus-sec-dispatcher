@@ -20,7 +20,9 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
@@ -61,7 +64,31 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public Set<DispatcherMeta> availableDispatchers() {
-        return Set.copyOf(dispatchers.values().stream().map(Dispatcher::meta).collect(Collectors.toSet()));
+        return Set.copyOf(
+                dispatchers.entrySet().stream().map(this::dispatcherMeta).collect(Collectors.toSet()));
+    }
+
+    private DispatcherMeta dispatcherMeta(Map.Entry<String, Dispatcher> dispatcher) {
+        if (dispatcher instanceof DispatcherMeta) {
+            return (DispatcherMeta) dispatcher;
+        } else {
+            return new DispatcherMeta() {
+                @Override
+                public String name() {
+                    return dispatcher.getKey();
+                }
+
+                @Override
+                public String displayName() {
+                    return dispatcher.getKey() + " (needs manual configuration)";
+                }
+
+                @Override
+                public Collection<Field> fields() {
+                    return List.of();
+                }
+            };
+        }
     }
 
     @Override

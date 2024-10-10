@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 
 import java.util.Optional;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -32,7 +33,7 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  */
 @Singleton
 @Named(SystemPropertyMasterSource.NAME)
-public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport {
+public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
     public static final String NAME = "system-property";
 
     public SystemPropertyMasterSource() {
