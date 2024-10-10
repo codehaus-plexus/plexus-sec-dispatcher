@@ -69,8 +69,10 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     private DispatcherMeta dispatcherMeta(Map.Entry<String, Dispatcher> dispatcher) {
-        if (dispatcher instanceof DispatcherMeta) {
-            return (DispatcherMeta) dispatcher;
+        // sisu components are lazy!
+        Dispatcher d = dispatcher.getValue();
+        if (d instanceof DispatcherMeta meta) {
+            return meta;
         } else {
             return new DispatcherMeta() {
                 @Override
