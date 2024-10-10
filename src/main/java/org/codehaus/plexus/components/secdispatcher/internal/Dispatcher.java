@@ -15,8 +15,10 @@ package org.codehaus.plexus.components.secdispatcher.internal;
 
 import java.util.Map;
 
-import org.codehaus.plexus.components.secdispatcher.Meta;
+import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Dispatcher.
@@ -27,25 +29,47 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  */
 public interface Dispatcher {
     /**
-     * The metadata of this dispatcher.
+     * The "encrypt payload" prepared by dispatcher.
      */
-    Meta meta();
+    final class EncryptPayload {
+        private final Map<String, String> attributes;
+        private final String encrypted;
+
+        public EncryptPayload(Map<String, String> attributes, String encrypted) {
+            this.attributes = requireNonNull(attributes);
+            this.encrypted = requireNonNull(encrypted);
+        }
+
+        public Map<String, String> getAttributes() {
+            return attributes;
+        }
+
+        public String getEncrypted() {
+            return encrypted;
+        }
+    }
 
     /**
-     * encrypt given plaintext string
+     * The metadata of this dispatcher.
+     */
+    DispatcherMeta meta();
+
+    /**
+     * Encrypt given plaintext string. Implementation must return at least same attributes it got, but may add more
+     * attributes to returned payload.
      *
-     * @param str string to encrypt
+     * @param str string to encrypt, never {@code null}
      * @param attributes attributes, never {@code null}
      * @param config configuration from settings-security.xml, never {@code null}
-     * @return encrypted string
+     * @return encrypted string and attributes in {@link EncryptPayload}
      */
-    String encrypt(String str, Map<String, String> attributes, Map<String, String> config)
+    EncryptPayload encrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException;
 
     /**
-     * decrypt given encrypted string
+     * Decrypt given encrypted string.
      *
-     * @param str string to decrypt
+     * @param str string to decrypt, never {@code null}
      * @param attributes attributes, never {@code null}
      * @param config configuration from settings-security.xml, never {@code null}
      * @return decrypted string

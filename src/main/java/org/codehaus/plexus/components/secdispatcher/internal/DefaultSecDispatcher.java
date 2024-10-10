@@ -22,13 +22,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
-import org.codehaus.plexus.components.secdispatcher.Meta;
+import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
@@ -59,7 +60,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     @Override
-    public Set<Meta> availableDispatchers() {
+    public Set<DispatcherMeta> availableDispatchers() {
         return Set.copyOf(dispatchers.values().stream().map(Dispatcher::meta).collect(Collectors.toSet()));
     }
 
@@ -74,17 +75,25 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 attr = new HashMap<>(attr);
             }
             if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                attr.put(DISPATCHER_NAME_ATTR, getConfiguration().getDefaultDispatcher());
+                attr.put(
+                        DISPATCHER_NAME_ATTR,
+                        requireNonNull(
+                                getConfiguration().getDefaultDispatcher(),
+                                "no default dispatcher set in configuration"));
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);
             if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
+            Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
+            if (!Objects.equals(payload.getAttributes().get(DISPATCHER_NAME_ATTR), name)) {
+                throw new SecDispatcherException("Dispatcher " + name + " bug: mismatched name attribute");
+            }
             String res = ATTR_START
-                    + attr.entrySet().stream()
+                    + payload.getAttributes().entrySet().stream()
                             .map(e -> e.getKey() + "=" + e.getValue())
                             .collect(Collectors.joining(","))
                     + ATTR_STOP;
-            res += dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
+            res += payload.getEncrypted();
             return cipher.decorate(res);
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
@@ -96,9 +105,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
         if (!isEncryptedString(str)) return str;
         try {
             String bare = cipher.unDecorate(str);
-            Map<String, String> attr = stripAttributes(bare);
+            Map<String, String> attr = requireNonNull(stripAttributes(bare));
             if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                attr.put(DISPATCHER_NAME_ATTR, getConfiguration().getDefaultDispatcher());
+                throw new SecDispatcherException("malformed password: no attribute with name");
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);

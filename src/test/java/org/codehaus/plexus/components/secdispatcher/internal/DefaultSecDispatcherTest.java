@@ -36,9 +36,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefaultSecDispatcherTest {
-    String masterPassword = "masterPw";
-    String password = "somePassword";
-
     private void saveSec(String dispatcher, Map<String, String> config) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
@@ -67,29 +64,26 @@ public class DefaultSecDispatcherTest {
 
     @Test
     void masterWithEnvRoundTrip() throws Exception {
-        saveSec("master", Map.of("masterSource", "env:MASTER_PASSWORD", "masterCipher", AESGCMNoPadding.CIPHER_ALG));
-        DefaultSecDispatcher sd = construct();
-
-        assertEquals(1, sd.availableDispatchers().size());
-        String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
-        assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
-        assertTrue(encrypted.contains("name=master"));
-        assertTrue(encrypted.contains("a=b"));
-        String pass = sd.decrypt(encrypted);
-        assertEquals("supersecret", pass);
+        saveSec("master", Map.of("source", "env:MASTER_PASSWORD", "cipher", AESGCMNoPadding.CIPHER_ALG));
+        roundtrip();
     }
 
     @Test
     void masterWithSystemPropertyRoundTrip() throws Exception {
-        saveSec(
-                "master",
-                Map.of("masterSource", "system-property:masterPassword", "masterCipher", AESGCMNoPadding.CIPHER_ALG));
+        saveSec("master", Map.of("source", "system-property:masterPassword", "cipher", AESGCMNoPadding.CIPHER_ALG));
+        roundtrip();
+    }
+
+    protected void roundtrip() {
         DefaultSecDispatcher sd = construct();
 
         assertEquals(1, sd.availableDispatchers().size());
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
+        // example:
+        // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
         assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
         assertTrue(encrypted.contains("name=master"));
+        assertTrue(encrypted.contains("cipher=" + AESGCMNoPadding.CIPHER_ALG));
         assertTrue(encrypted.contains("a=b"));
         String pass = sd.decrypt(encrypted);
         assertEquals("supersecret", pass);

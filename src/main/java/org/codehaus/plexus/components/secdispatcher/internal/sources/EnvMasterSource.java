@@ -21,6 +21,8 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.Optional;
+
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -35,6 +37,16 @@ public final class EnvMasterSource extends PrefixMasterSourceSupport {
 
     public EnvMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "Extracts the master password out of environment variables with configured name";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":" + "ENV_VARIABLE");
     }
 
     @Override

@@ -32,6 +32,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HexFormat;
+import java.util.Optional;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
@@ -47,6 +48,16 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport {
 
     public GpgAgentMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "Interacts with GPG Agent via domain socket to get the master password";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":" + "$agentSocketPath");
     }
 
     @Override

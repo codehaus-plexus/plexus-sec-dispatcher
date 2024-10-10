@@ -48,7 +48,7 @@ public interface SecDispatcher {
     /**
      * Returns the set of available dispatcher metadata, never {@code null}.
      */
-    Set<Meta> availableDispatchers();
+    Set<DispatcherMeta> availableDispatchers();
 
     /**
      * Encrypt given plaintext string.

@@ -13,6 +13,8 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
+import java.util.Optional;
+
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -20,16 +22,27 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  */
 public interface MasterSource {
     /**
-     * Handles the URI to get master password. Implementation may do one of the following things:
+     * String describing what this source does.
+     */
+    String description();
+
+    /**
+     * Optional "config template" that may serve as basis to configure this master source. The template cannot be
+     * "reused" as is as configuration.
+     */
+    Optional<String> configTemplate();
+
+    /**
+     * Handles the config to get master password. Implementation may do one of the following things:
      * <ul>
-     *     <li>if the URI cannot be handled by given source, return {@code null}</li>
-     *     <li>if master password retrieval was attempted, but failed throw {@link SecDispatcherException}</li>
+     *     <li>if the config cannot be handled by given source, return {@code null}</li>
+     *     <li>otherwise, if master password retrieval based on config was attempted but failed, throw {@link SecDispatcherException}</li>
      *     <li>happy path: return the master password.</li>
      * </ul>
      *
-     * @param masterSource the source of master password, and opaque string.
-     * @return the master password, or {@code null} if implementation does not handle this masterSource
-     * @throws SecDispatcherException If implementation does handle this masterSource, but cannot obtain it
+     * @param config the source of master password, and opaque string.
+     * @return the master password, or {@code null} if implementation does not handle this config
+     * @throws SecDispatcherException If implementation does handle this masterSource, but cannot obtain master password
      */
-    String handle(String masterSource) throws SecDispatcherException;
+    String handle(String config) throws SecDispatcherException;
 }

@@ -1,6 +1,7 @@
 package org.codehaus.plexus.components.secdispatcher;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.Objects.requireNonNull;
@@ -8,34 +9,58 @@ import static java.util.Objects.requireNonNull;
 /**
  * Meta description of dispatcher.
  */
-public interface Meta {
+public interface DispatcherMeta {
     class Field {
         private final String key;
         private final boolean optional;
         private final String defaultValue;
         private final String description;
+        private final List<Field> options;
 
-        private Field(String key, boolean optional, String defaultValue, String description) {
+        private Field(String key, boolean optional, String defaultValue, String description, List<Field> options) {
             this.key = requireNonNull(key);
             this.optional = optional;
             this.defaultValue = defaultValue;
             this.description = requireNonNull(description);
+            this.options = options;
         }
 
+        /**
+         * The key to be used in configuration map for field.
+         */
         public String getKey() {
             return key;
         }
 
+        /**
+         * Is configuration optional?
+         */
         public boolean isOptional() {
             return optional;
         }
 
+        /**
+         * Optional default value of the configuration.
+         */
         public Optional<String> getDefaultValue() {
             return Optional.ofNullable(defaultValue);
         }
 
+        /**
+         * The human description of the configuration.
+         */
         public String getDescription() {
             return description;
+        }
+
+        /**
+         * Optional list of options, if this configuration accepts limited values. Each option is represented
+         * as field, where {@link #getKey()} represents the value to be used, and {@link #displayName()} represents
+         * the description of option. The {@link #getDefaultValue()}, if present represents the value to be used
+         * instead of {@link #getKey()}.
+         */
+        public Optional<List<Field>> getOptions() {
+            return Optional.ofNullable(options);
         }
 
         public static Builder builder(String key) {
@@ -47,6 +72,7 @@ public interface Meta {
             private boolean optional;
             private String defaultValue;
             private String description;
+            private List<Field> options;
 
             private Builder(String key) {
                 this.key = requireNonNull(key);
@@ -67,24 +93,29 @@ public interface Meta {
                 return this;
             }
 
+            public Builder options(List<Field> options) {
+                this.options = requireNonNull(options);
+                return this;
+            }
+
             public Field build() {
-                return new Field(key, optional, defaultValue, description);
+                return new Field(key, optional, defaultValue, description, options);
             }
         }
     }
 
     /**
-     * The key of the item.
+     * The name of the dispatcher.
      */
     String name();
 
     /**
-     * Returns the display (human) name of the item.
+     * Returns the display (human) name of the dispatcher.
      */
     String displayName();
 
     /**
-     * Returns the configuration fields of the item.
+     * Returns the configuration fields of the dispatcher.
      */
     Collection<Field> fields();
 }
