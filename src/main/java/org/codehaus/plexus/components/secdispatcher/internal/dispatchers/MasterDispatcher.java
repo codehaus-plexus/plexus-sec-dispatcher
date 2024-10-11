@@ -30,6 +30,7 @@ import org.codehaus.plexus.components.secdispatcher.MasterSource;
 import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.SecUtil;
 
 /**
  * This dispatcher is logically equivalent (but much more secure) that Maven3 "master password" encryption.
@@ -39,8 +40,9 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     public static final String NAME = "master";
 
-    private static final String MASTER_CIPHER = "cipher";
-    private static final String MASTER_SOURCE = "source";
+    private static final String MASTER_CIPHER_ATTR = "c";
+    private static final String CONF_MASTER_CIPHER = "cipher";
+    private static final String CONF_MASTER_SOURCE = "source";
 
     private final PlexusCipher cipher;
     protected final Map<String, MasterSource> masterSources;
@@ -64,7 +66,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     @Override
     public Collection<Field> fields() {
         return List.of(
-                Field.builder(MASTER_SOURCE)
+                Field.builder(CONF_MASTER_SOURCE)
                         .optional(false)
                         .description("Source of the master password")
                         .options(masterSources.entrySet().stream()
@@ -87,7 +89,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
                                 })
                                 .toList())
                         .build(),
-                Field.builder(MASTER_CIPHER)
+                Field.builder(CONF_MASTER_CIPHER)
                         .optional(false)
                         .description("Cipher to use with master password")
                         .options(cipher.availableCiphers().stream()
@@ -104,7 +106,8 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
             String encrypted = cipher.encrypt(masterCipher, str, getMasterPassword(config));
             HashMap<String, String> attr = new HashMap<>(attributes);
             attr.put(SecDispatcher.DISPATCHER_NAME_ATTR, NAME);
-            attr.put(MASTER_CIPHER, masterCipher);
+            attr.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
+            attr.put(MASTER_CIPHER_ATTR, masterCipher);
             return new EncryptPayload(attr, encrypted);
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException("Encrypt failed", e);
@@ -123,9 +126,9 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     }
 
     private String getMasterPassword(Map<String, String> config) throws SecDispatcherException {
-        String masterSource = config.get(MASTER_SOURCE);
+        String masterSource = config.get(CONF_MASTER_SOURCE);
         if (masterSource == null) {
-            throw new SecDispatcherException("Invalid configuration: Missing configuration " + MASTER_SOURCE);
+            throw new SecDispatcherException("Invalid configuration: Missing configuration " + CONF_MASTER_SOURCE);
         }
         for (MasterSource masterPasswordSource : masterSources.values()) {
             String masterPassword = masterPasswordSource.handle(masterSource);
@@ -135,14 +138,18 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     }
 
     private String getMasterCipher(Map<String, String> source, boolean config) throws SecDispatcherException {
-        String masterCipher = source.get(MASTER_CIPHER);
-        if (masterCipher == null) {
-            if (config) {
-                throw new SecDispatcherException("Invalid configuration: Missing configuration " + MASTER_CIPHER);
-            } else {
-                throw new SecDispatcherException("Malformed attributes: Missing attribute " + MASTER_CIPHER);
+        if (config) {
+            String masterCipher = source.get(CONF_MASTER_CIPHER);
+            if (masterCipher == null) {
+                throw new SecDispatcherException("Invalid configuration: Missing configuration " + CONF_MASTER_CIPHER);
             }
+            return masterCipher;
+        } else {
+            String masterCipher = source.get(MASTER_CIPHER_ATTR);
+            if (masterCipher == null) {
+                throw new SecDispatcherException("Malformed attributes: Missing attribute " + MASTER_CIPHER_ATTR);
+            }
+            return masterCipher;
         }
-        return masterCipher;
     }
 }

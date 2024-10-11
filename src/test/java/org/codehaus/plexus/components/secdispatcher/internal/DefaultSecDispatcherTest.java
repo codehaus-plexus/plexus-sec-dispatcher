@@ -83,9 +83,11 @@ public class DefaultSecDispatcherTest {
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         // example:
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
+        System.out.println(encrypted);
         assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
-        assertTrue(encrypted.contains("name=master"));
-        assertTrue(encrypted.contains("cipher=" + AESGCMNoPadding.CIPHER_ALG));
+        assertTrue(encrypted.contains("n=master"));
+        assertTrue(encrypted.contains("c=" + AESGCMNoPadding.CIPHER_ALG));
+        assertTrue(encrypted.contains("v=test"));
         assertTrue(encrypted.contains("a=b"));
         String pass = sd.decrypt(encrypted);
         assertEquals("supersecret", pass);

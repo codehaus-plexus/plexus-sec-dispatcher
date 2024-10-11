@@ -68,7 +68,7 @@ public class SecUtilTest {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
-        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(SecUtil.specVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
         assertEquals("magic:mighty", config.getDefaultDispatcher());
         SecUtil.write(path, config, false);
@@ -79,7 +79,7 @@ public class SecUtilTest {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
-        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(SecUtil.specVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
         assertEquals("magic:mighty", config.getDefaultDispatcher());
         SecUtil.write(path, config, true);

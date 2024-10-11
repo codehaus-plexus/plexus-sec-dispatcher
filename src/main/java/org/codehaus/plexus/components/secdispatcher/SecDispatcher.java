@@ -30,7 +30,12 @@ public interface SecDispatcher {
      *
      * @see #availableDispatchers()
      */
-    String DISPATCHER_NAME_ATTR = "name";
+    String DISPATCHER_NAME_ATTR = "n";
+
+    /**
+     * Attribute for version that dispatcher should use.
+     */
+    String DISPATCHER_VERSION_ATTR = "v";
 
     /**
      * Returns the set of available dispatcher metadata, never {@code null}.
