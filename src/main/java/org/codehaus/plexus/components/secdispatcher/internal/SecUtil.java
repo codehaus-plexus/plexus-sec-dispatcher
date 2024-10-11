@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
@@ -47,7 +48,7 @@ public final class SecUtil {
     private SecUtil() {}
 
     /**
-     * Reads the configuration model up, optionally resolving relocation too.
+     * Reads the configuration model up, if exists, otherwise returns {@code null}.
      */
     public static SettingsSecurity read(Path configurationFile) throws IOException {
         requireNonNull(configurationFile, "configurationFile must not be null");
@@ -57,11 +58,16 @@ public final class SecUtil {
                 sec = new SecurityConfigurationStaxReader().read(in);
             }
             return sec;
+        } catch (NoSuchFileException e) {
+            return null;
         } catch (XMLStreamException e) {
             throw new IOException("Parsing error", e);
         }
     }
 
+    /**
+     * Returns config with given name, or {@code null} if not exist.
+     */
     public static Map<String, String> getConfig(SettingsSecurity sec, String name) {
         if (sec != null && name != null) {
             List<Config> cl = sec.getConfigurations();

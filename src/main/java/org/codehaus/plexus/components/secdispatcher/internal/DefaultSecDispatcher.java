@@ -111,7 +111,8 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 attr.put(
                         DISPATCHER_NAME_ATTR,
                         requireNonNull(
-                                getConfiguration().getDefaultDispatcher(),
+                                requireNonNull(SecUtil.read(configurationFile), "no configuration")
+                                        .getDefaultDispatcher(),
                                 "no default dispatcher set in configuration"));
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
@@ -176,7 +177,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     protected Map<String, String> prepareDispatcherConfig(String type) throws IOException {
         HashMap<String, String> dispatcherConf = new HashMap<>();
-        Map<String, String> conf = SecUtil.getConfig(getConfiguration(), type);
+        Map<String, String> conf = SecUtil.getConfig(SecUtil.read(configurationFile), type);
         if (conf != null) {
             dispatcherConf.putAll(conf);
         }
@@ -217,9 +218,5 @@ public class DefaultSecDispatcher implements SecDispatcher {
     protected boolean isEncryptedString(String str) {
         if (str == null) return false;
         return cipher.isEncryptedString(str);
-    }
-
-    protected SettingsSecurity getConfiguration() throws SecDispatcherException, IOException {
-        return SecUtil.read(configurationFile);
     }
 }

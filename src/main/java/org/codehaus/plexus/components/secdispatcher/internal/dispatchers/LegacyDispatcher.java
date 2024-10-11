@@ -74,7 +74,7 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
 
     @Override
     public String displayName() {
-        return "LEGACY (for migration purposes; is hidden)";
+        return "LEGACY (for migration purposes only; can only decrypt)";
     }
 
     @Override
