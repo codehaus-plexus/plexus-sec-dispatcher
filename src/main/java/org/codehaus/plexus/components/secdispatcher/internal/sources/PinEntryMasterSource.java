@@ -31,7 +31,7 @@ import org.codehaus.plexus.components.secdispatcher.PinEntry;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
- * Inspired by <a href="https://velvetcache.org/2023/03/26/a-peek-inside-pinentry/">A peek inside pinentry</a>
+ * Master source using {@link PinEntry}
  */
 @Singleton
 @Named(PinEntryMasterSource.NAME)
@@ -55,9 +55,9 @@ public class PinEntryMasterSource extends PrefixMasterSourceSupport implements M
     @Override
     public String doHandle(String s) throws SecDispatcherException {
         try {
-            PinEntry.Result<String> result = new PinEntry(s)
+            PinEntry.Result result = new PinEntry(s)
                     .setTimeout(Duration.ofSeconds(30))
-                    .setKeyInfo("maven:masterPassword")
+                    .setKeyInfo("Maven: n/masterPassword")
                     .setTitle("Maven Master Password")
                     .setDescription("Please enter the Maven master password")
                     .setPrompt("Maven master password")
