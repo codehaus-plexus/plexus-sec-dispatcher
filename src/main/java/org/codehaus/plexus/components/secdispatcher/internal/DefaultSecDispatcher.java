@@ -31,6 +31,7 @@ import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 
 import static java.util.Objects.requireNonNull;
@@ -139,7 +140,8 @@ public class DefaultSecDispatcher implements SecDispatcher {
             String bare = cipher.unDecorate(str);
             Map<String, String> attr = requireNonNull(stripAttributes(bare));
             if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                throw new SecDispatcherException("malformed password: no attribute with name");
+                // TODO: log?
+                attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);
@@ -148,6 +150,13 @@ public class DefaultSecDispatcher implements SecDispatcher {
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean isLegacyPassword(String str) {
+        if (!isEncryptedString(str)) return false;
+        Map<String, String> attr = requireNonNull(stripAttributes(cipher.unDecorate(str)));
+        return !attr.containsKey(DISPATCHER_NAME_ATTR);
     }
 
     @Override

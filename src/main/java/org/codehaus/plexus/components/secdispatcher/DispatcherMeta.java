@@ -105,6 +105,13 @@ public interface DispatcherMeta {
     }
 
     /**
+     * Option to hide this instance from users, like for migration or legacy purposes.
+     */
+    default boolean isHidden() {
+        return false;
+    }
+
+    /**
      * The name of the dispatcher.
      */
     String name();

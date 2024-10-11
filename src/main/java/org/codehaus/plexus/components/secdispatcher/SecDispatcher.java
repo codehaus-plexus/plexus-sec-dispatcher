@@ -57,6 +57,11 @@ public interface SecDispatcher {
     String decrypt(String str) throws SecDispatcherException, IOException;
 
     /**
+     * Returns {@code true} if passed in string contains "legacy" password (Maven3 kind).
+     */
+    boolean isLegacyPassword(String str);
+
+    /**
      * Reads the effective configuration, eventually creating new instance if not present.
      *
      * @param createIfMissing If {@code true}, it will create a new empty instance
