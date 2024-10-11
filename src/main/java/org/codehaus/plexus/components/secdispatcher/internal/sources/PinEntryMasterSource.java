@@ -44,12 +44,12 @@ public class PinEntryMasterSource extends PrefixMasterSourceSupport implements M
 
     @Override
     public String description() {
-        return "Secure PinEntry prompt";
+        return "Secure PinEntry prompt (pinentry path should be edited)";
     }
 
     @Override
     public Optional<String> configTemplate() {
-        return Optional.of(NAME + ":" + "$pinentryPath");
+        return Optional.of(NAME + ":$pinentryPath");
     }
 
     @Override

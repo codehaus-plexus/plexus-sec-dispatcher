@@ -42,12 +42,12 @@ public final class EnvMasterSource extends PrefixMasterSourceSupport implements 
 
     @Override
     public String description() {
-        return "Environment variable";
+        return "Environment variable (variable name should be edited)";
     }
 
     @Override
     public Optional<String> configTemplate() {
-        return Optional.of(NAME + ":" + "ENV_VARIABLE");
+        return Optional.of(NAME + ":$VARIABLE_NAME");
     }
 
     @Override

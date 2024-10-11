@@ -42,12 +42,12 @@ public final class SystemPropertyMasterSource extends PrefixMasterSourceSupport 
 
     @Override
     public String description() {
-        return "Java System properties";
+        return "Java System properties (property name should be edited)";
     }
 
     @Override
     public Optional<String> configTemplate() {
-        return Optional.of(NAME + ":" + "$systemProperty");
+        return Optional.of(NAME + ":$systemProperty");
     }
 
     @Override

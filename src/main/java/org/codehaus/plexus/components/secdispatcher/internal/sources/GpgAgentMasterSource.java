@@ -53,12 +53,12 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implem
 
     @Override
     public String description() {
-        return "GPG Agent";
+        return "GPG Agent (agent socket path should be edited)";
     }
 
     @Override
     public Optional<String> configTemplate() {
-        return Optional.of(NAME + ":" + "$agentSocketPath");
+        return Optional.of(NAME + ":$agentSocketPath");
     }
 
     @Override
