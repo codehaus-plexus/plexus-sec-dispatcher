@@ -16,6 +16,7 @@ package org.codehaus.plexus.components.secdispatcher.internal;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -36,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefaultSecDispatcherTest {
+    private final Path CONFIG_PATH = Paths.get("./target/sec.xml");
+
     private void saveSec(String dispatcher, Map<String, String> config) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
@@ -56,10 +59,9 @@ public class DefaultSecDispatcherTest {
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
         sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
 
-        try (OutputStream fos = Files.newOutputStream(Paths.get("./target/sec.xml"))) {
+        try (OutputStream fos = Files.newOutputStream(CONFIG_PATH)) {
             new SecurityConfigurationStaxWriter().write(fos, sec);
         }
-        System.setProperty(DefaultSecDispatcher.SYSTEM_PROPERTY_CONFIGURATION_LOCATION, "./target/sec.xml");
     }
 
     @Test
@@ -74,7 +76,7 @@ public class DefaultSecDispatcherTest {
         roundtrip();
     }
 
-    protected void roundtrip() {
+    protected void roundtrip() throws Exception {
         DefaultSecDispatcher sd = construct();
 
         assertEquals(1, sd.availableDispatchers().size());
@@ -104,6 +106,6 @@ public class DefaultSecDispatcherTest {
                                         new SystemPropertyMasterSource(),
                                         GpgAgentMasterSource.NAME,
                                         new GpgAgentMasterSource()))),
-                DefaultSecDispatcher.DEFAULT_CONFIGURATION);
+                CONFIG_PATH);
     }
 }

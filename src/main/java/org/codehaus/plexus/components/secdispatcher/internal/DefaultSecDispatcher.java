@@ -13,13 +13,9 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -40,26 +36,33 @@ import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import static java.util.Objects.requireNonNull;
 
 /**
+ * Note: this implementation is NOT a JSR330 component. Integrating apps anyway want to customize it (at least
+ * the name and location of configuration file), so instead as before (providing "bad" configuration file just
+ * to have one), it is the duty of integrator to wrap and "finish" the implementation in a way it suits the
+ * integrator. Also, using "globals" like Java System Properties are bad thing, and it is integrator who knows
+ * what is needed anyway.
+ * <p>
+ * Recommended way for integration is to create JSR330 {@link javax.inject.Provider}.
+ *
  * @author Oleg Gusakov
  */
-@Singleton
-@Named
 public class DefaultSecDispatcher implements SecDispatcher {
     public static final String ATTR_START = "[";
     public static final String ATTR_STOP = "]";
 
     protected final PlexusCipher cipher;
     protected final Map<String, Dispatcher> dispatchers;
-    protected final String configurationFile;
+    protected final Path configurationFile;
 
-    @Inject
-    public DefaultSecDispatcher(
-            PlexusCipher cipher,
-            Map<String, Dispatcher> dispatchers,
-            @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
+    public DefaultSecDispatcher(PlexusCipher cipher, Map<String, Dispatcher> dispatchers, Path configurationFile) {
         this.cipher = requireNonNull(cipher);
         this.dispatchers = requireNonNull(dispatchers);
         this.configurationFile = requireNonNull(configurationFile);
+
+        // file may or may not exist, but one thing is certain: it cannot be an exiting directory
+        if (Files.isDirectory(configurationFile)) {
+            throw new IllegalArgumentException("configurationFile cannot be a directory");
+        }
     }
 
     @Override
@@ -94,7 +97,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     @Override
-    public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException {
+    public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException {
         if (isEncryptedString(str)) return str;
 
         try {
@@ -130,7 +133,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     @Override
-    public String decrypt(String str) throws SecDispatcherException {
+    public String decrypt(String str) throws SecDispatcherException, IOException {
         if (!isEncryptedString(str)) return str;
         try {
             String bare = cipher.unDecorate(str);
@@ -149,7 +152,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public SettingsSecurity readConfiguration(boolean createIfMissing) throws IOException {
-        SettingsSecurity configuration = SecUtil.read(getConfigurationPath());
+        SettingsSecurity configuration = SecUtil.read(configurationFile);
         if (configuration == null && createIfMissing) {
             configuration = new SettingsSecurity();
         }
@@ -159,10 +162,10 @@ public class DefaultSecDispatcher implements SecDispatcher {
     @Override
     public void writeConfiguration(SettingsSecurity configuration) throws IOException {
         requireNonNull(configuration, "configuration is null");
-        SecUtil.write(getConfigurationPath(), configuration, true);
+        SecUtil.write(configurationFile, configuration, true);
     }
 
-    private Map<String, String> prepareDispatcherConfig(String type) {
+    protected Map<String, String> prepareDispatcherConfig(String type) throws IOException {
         HashMap<String, String> dispatcherConf = new HashMap<>();
         Map<String, String> conf = SecUtil.getConfig(getConfiguration(), type);
         if (conf != null) {
@@ -171,7 +174,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return dispatcherConf;
     }
 
-    private String strip(String str) {
+    protected String strip(String str) {
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
@@ -180,7 +183,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return str;
     }
 
-    private Map<String, String> stripAttributes(String str) {
+    protected Map<String, String> stripAttributes(String str) {
         HashMap<String, String> result = new HashMap<>();
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
@@ -202,30 +205,12 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return result;
     }
 
-    private boolean isEncryptedString(String str) {
+    protected boolean isEncryptedString(String str) {
         if (str == null) return false;
         return cipher.isEncryptedString(str);
     }
 
-    private Path getConfigurationPath() {
-        String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
-        location = location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
-        return Paths.get(location);
-    }
-
-    private SettingsSecurity getConfiguration() throws SecDispatcherException {
-        Path path = getConfigurationPath();
-        try {
-            SettingsSecurity sec = SecUtil.read(path);
-            if (sec == null)
-                throw new SecDispatcherException("Please check that configuration file on path " + path + " exists");
-            return sec;
-        } catch (IOException e) {
-            throw new SecDispatcherException(e.getMessage(), e);
-        }
-    }
-
-    public String getConfigurationFile() {
-        return configurationFile;
+    protected SettingsSecurity getConfiguration() throws SecDispatcherException, IOException {
+        return SecUtil.read(configurationFile);
     }
 }

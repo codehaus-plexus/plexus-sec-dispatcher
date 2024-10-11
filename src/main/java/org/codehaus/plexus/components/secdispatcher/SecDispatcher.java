@@ -26,19 +26,6 @@ import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
  */
 public interface SecDispatcher {
     /**
-     * The default path of configuration.
-     * <p>
-     * The character {@code ~} (tilde) may be present as first character ONLY and is
-     * interpreted as "user.home" system property, and it MUST be followed by path separator.
-     */
-    String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
-
-    /**
-     * Java System Property that may be set, to override configuration path.
-     */
-    String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
-
-    /**
      * Attribute that selects a dispatcher.
      *
      * @see #availableDispatchers()
@@ -58,7 +45,7 @@ public interface SecDispatcher {
      * @return encrypted string
      * @throws SecDispatcherException in case of problem
      */
-    String encrypt(String str, Map<String, String> attr) throws SecDispatcherException;
+    String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException;
 
     /**
      * Decrypt given encrypted string.
@@ -67,7 +54,7 @@ public interface SecDispatcher {
      * @return decrypted string
      * @throws SecDispatcherException in case of problem
      */
-    String decrypt(String str) throws SecDispatcherException;
+    String decrypt(String str) throws SecDispatcherException, IOException;
 
     /**
      * Reads the effective configuration, eventually creating new instance if not present.
