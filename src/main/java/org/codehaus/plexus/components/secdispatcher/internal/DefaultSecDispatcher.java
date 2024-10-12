@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
@@ -120,11 +119,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
             Dispatcher dispatcher = dispatchers.get(name);
             if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
             Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
-            if (!Objects.equals(payload.getAttributes().get(DISPATCHER_NAME_ATTR), name)) {
-                throw new SecDispatcherException("Dispatcher " + name + " bug: mismatched name attribute");
-            }
+            HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
+            resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
+            resultAttributes.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
             String res = ATTR_START
-                    + payload.getAttributes().entrySet().stream()
+                    + resultAttributes.entrySet().stream()
                             .map(e -> e.getKey() + "=" + e.getValue())
                             .collect(Collectors.joining(","))
                     + ATTR_STOP;

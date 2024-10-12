@@ -31,7 +31,6 @@ import org.codehaus.plexus.components.secdispatcher.MasterSource;
 import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.SecUtil;
 
 /**
  * This dispatcher is logically equivalent (but much more secure) that Maven3 "master password" encryption.
@@ -106,8 +105,6 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
             String masterCipher = getMasterCipher(config, true);
             String encrypted = cipher.encrypt(masterCipher, str, getMasterPassword(config));
             HashMap<String, String> attr = new HashMap<>(attributes);
-            attr.put(SecDispatcher.DISPATCHER_NAME_ATTR, NAME);
-            attr.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
             attr.put(MASTER_CIPHER_ATTR, masterCipher);
             return new EncryptPayload(attr, encrypted);
         } catch (PlexusCipherException e) {
