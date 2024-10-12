@@ -196,22 +196,22 @@ public class DefaultSecDispatcher implements SecDispatcher {
                             .add("No default dispatcher set in configuration");
                 } else {
                     report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                            .add("Default dispatcher set to " + defaultDispatcher);
+                            .add("Default dispatcher configured");
                     Dispatcher dispatcher = dispatchers.get(defaultDispatcher);
                     if (dispatcher == null) {
                         report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                                .add("Default dispatcher " + defaultDispatcher + " not present in system");
+                                .add("Configured default dispatcher not present in system");
                     } else {
                         ValidationResponse dispatcherResponse =
                                 dispatcher.validateConfiguration(prepareDispatcherConfig(defaultDispatcher));
                         subsystems.add(dispatcherResponse);
                         if (!dispatcherResponse.isValid()) {
                             report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                                    .add("Default dispatcher " + defaultDispatcher + " configuration is invalid");
+                                    .add("Configured default dispatcher configuration is invalid");
                         } else {
                             valid = true;
                             report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                                    .add("Default dispatcher " + defaultDispatcher + " configuration is valid");
+                                    .add("Configured default dispatcher configuration is valid");
 
                             // below is legacy check, that does not affect validity of config, is merely informational
                             Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);

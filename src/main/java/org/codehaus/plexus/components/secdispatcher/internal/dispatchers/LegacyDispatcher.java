@@ -114,24 +114,24 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
             String mpe = getMasterMasterPasswordFromSettingsSecurityXml();
             if (mpe == null) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                        .add("Legacy configuration not found or does not contain encrypted master password");
+                        .add("Legacy configuration not found or does not contains encrypted master password");
             } else {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                        .add("Legacy configuration found and contain encrypted master password");
+                        .add("Legacy configuration found with encrypted master password");
 
                 String mp = getMasterPassword();
                 if (mp == null) {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                            .add("Master Password not found");
+                            .add("Legacy master password not found");
                 } else {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                            .add("Master Password successfully decrypted");
+                            .add("Legacy master password successfully decrypted");
                     valid = true;
                 }
             }
         } catch (PlexusCipherException e) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                    .add("Master Password decryption failed");
+                    .add("Legacy master password decryption failed");
         }
         return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, List.of());
     }

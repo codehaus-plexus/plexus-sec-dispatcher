@@ -131,20 +131,20 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         String masterCipher = config.get(CONF_MASTER_CIPHER);
         if (masterCipher == null) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                    .add("Master Cipher configuration missing");
+                    .add("Cipher configuration missing");
         } else {
             if (!cipher.availableCiphers().contains(masterCipher)) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                        .add("Master Cipher " + masterCipher + " not supported");
+                        .add("Configured Cipher not supported");
             } else {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                        .add("Master Cipher " + masterCipher + " supported");
+                        .add("Configured Cipher supported");
             }
         }
         String masterSource = config.get(CONF_MASTER_SOURCE);
         if (masterSource == null) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                    .add("Master Source configuration missing");
+                    .add("Source configuration missing");
         } else {
             SecDispatcher.ValidationResponse masterSourceResponse = null;
             for (MasterSource masterPasswordSource : masterSources.values()) {
@@ -155,15 +155,15 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
             }
             if (masterSourceResponse == null) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                        .add("Master Source configuration `" + masterSource + "` not handled");
+                        .add("Configured Source configuration not handled");
             } else {
                 subsystems.add(masterSourceResponse);
                 if (!masterSourceResponse.isValid()) {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                            .add("Master Source configuration `" + masterSource + "` invalid");
+                            .add("Configured Source configuration invalid");
                 } else {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                            .add("Master Source configuration `" + masterSource + "` valid");
+                            .add("Configured Source configuration valid");
                     valid = true;
                 }
             }
