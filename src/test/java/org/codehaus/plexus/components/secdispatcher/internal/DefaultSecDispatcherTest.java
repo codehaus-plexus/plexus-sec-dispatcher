@@ -23,6 +23,7 @@ import java.util.Map;
 import org.codehaus.plexus.components.cipher.internal.AESGCMNoPadding;
 import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource;
@@ -84,11 +85,11 @@ public class DefaultSecDispatcherTest {
         SecDispatcher.ValidationResponse response = secDispatcher.validateConfiguration();
         assertTrue(response.isValid());
         // secDispatcher
-        assertTrue(response.getReport().size() == 1);
-        assertTrue(response.getSubsystems().size() == 1);
+        assertEquals(1, response.getReport().size());
+        assertEquals(2, response.getSubsystems().size());
         // master dispatcher
-        assertTrue(response.getSubsystems().get(0).getReport().size() == 1);
-        assertTrue(response.getSubsystems().get(0).getSubsystems().size() == 1);
+        assertEquals(1, response.getSubsystems().get(0).getReport().size());
+        assertEquals(1, response.getSubsystems().get(0).getSubsystems().size());
         // master source
         assertTrue(response.getSubsystems()
                         .get(0)
@@ -109,7 +110,7 @@ public class DefaultSecDispatcherTest {
     protected void roundtrip() throws Exception {
         DefaultSecDispatcher sd = construct();
 
-        assertEquals(1, sd.availableDispatchers().size());
+        assertEquals(2, sd.availableDispatchers().size());
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         // example:
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
@@ -136,7 +137,9 @@ public class DefaultSecDispatcherTest {
                                         SystemPropertyMasterSource.NAME,
                                         new SystemPropertyMasterSource(),
                                         GpgAgentMasterSource.NAME,
-                                        new GpgAgentMasterSource()))),
+                                        new GpgAgentMasterSource())),
+                        "legacy",
+                        new LegacyDispatcher(dpc)),
                 CONFIG_PATH);
     }
 }

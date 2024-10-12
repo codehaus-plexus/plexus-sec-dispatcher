@@ -212,6 +212,27 @@ public class DefaultSecDispatcher implements SecDispatcher {
                             valid = true;
                             report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
                                     .add("Default dispatcher " + defaultDispatcher + " configuration is valid");
+
+                            Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);
+                            if (legacy == null) {
+                                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                                        .add("Legacy dispatcher not present in system");
+                            } else {
+                                // legacy is just "informational" does not affect overall status; merely allows fallback
+                                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                                        .add("Legacy dispatcher present in system");
+                                ValidationResponse legacyResponse =
+                                        legacy.validateConfiguration(prepareDispatcherConfig(LegacyDispatcher.NAME));
+                                subsystems.add(legacyResponse);
+                                if (!legacyResponse.isValid()) {
+                                    report.computeIfAbsent(ValidationResponse.Level.WARNING, k -> new ArrayList<>())
+                                            .add(
+                                                    "Legacy dispatcher not operational; transparent fallback not possible");
+                                } else {
+                                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                                            .add("Legacy dispatcher is operational; transparent fallback possible");
+                                }
+                            }
                         }
                     }
                 }

@@ -31,8 +31,10 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +96,11 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
     public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException {
         try {
-            return legacyCipher.decrypt64(str, getMasterPassword());
+            String masterPassword = getMasterPassword();
+            if (masterPassword == null) {
+                throw new SecDispatcherException("Master password could not be obtained");
+            }
+            return legacyCipher.decrypt64(str, masterPassword);
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException("Decrypt failed", e);
         }
@@ -102,17 +108,30 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
 
     @Override
     public SecDispatcher.ValidationResponse validateConfiguration(Map<String, String> config) {
-        return new SecDispatcher.ValidationResponse(
-                getClass().getSimpleName(),
-                false,
-                Map.of(
-                        SecDispatcher.ValidationResponse.Level.ERROR,
-                        List.of("This dispatcher cannot and must not be directly used via configuration")),
-                List.of());
+        HashMap<SecDispatcher.ValidationResponse.Level, List<String>> report = new HashMap<>();
+        boolean valid = false;
+        try {
+            String mp = getMasterPassword();
+            if (mp == null) {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("Master Password not found");
+            } else {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Master Password found and decrypted");
+                valid = true;
+            }
+        } catch (PlexusCipherException e) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add("Master Password could not be decrypted");
+        }
+        return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, List.of());
     }
 
     private String getMasterPassword() throws SecDispatcherException {
         String encryptedMasterPassword = getMasterMasterPasswordFromSettingsSecurityXml();
+        if (encryptedMasterPassword == null) {
+            return null;
+        }
         return legacyCipher.decrypt64(plexusCipher.unDecorate(encryptedMasterPassword), MASTER_MASTER_PASSWORD);
     }
 
@@ -133,7 +152,7 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
                 // just ignore whatever it is
             }
         }
-        throw new SecDispatcherException("Could not locate legacy master password: " + xml);
+        return null;
     }
 
     private static final class LegacyCipher {
