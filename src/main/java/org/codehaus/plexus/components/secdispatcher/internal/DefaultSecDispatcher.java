@@ -212,35 +212,35 @@ public class DefaultSecDispatcher implements SecDispatcher {
                             valid = true;
                             report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
                                     .add("Configured default dispatcher configuration is valid");
-
-                            // below is legacy check, that does not affect validity of config, is merely informational
-                            Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);
-                            if (legacy == null) {
-                                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                                        .add("Legacy dispatcher not present in system");
-                            } else {
-                                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                                        .add("Legacy dispatcher present in system");
-                                ValidationResponse legacyResponse =
-                                        legacy.validateConfiguration(prepareDispatcherConfig(LegacyDispatcher.NAME));
-                                subsystems.add(legacyResponse);
-                                if (!legacyResponse.isValid()) {
-                                    report.computeIfAbsent(ValidationResponse.Level.WARNING, k -> new ArrayList<>())
-                                            .add(
-                                                    "Legacy dispatcher not operational; transparent fallback not possible");
-                                } else {
-                                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                                            .add("Legacy dispatcher is operational; transparent fallback possible");
-                                }
-                            }
                         }
                     }
+                }
+            }
+
+            // below is legacy check, that does not affect validity of config, is merely informational
+            Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);
+            if (legacy == null) {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Legacy dispatcher not present in system");
+            } else {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Legacy dispatcher present in system");
+                ValidationResponse legacyResponse =
+                        legacy.validateConfiguration(prepareDispatcherConfig(LegacyDispatcher.NAME));
+                subsystems.add(legacyResponse);
+                if (!legacyResponse.isValid()) {
+                    report.computeIfAbsent(ValidationResponse.Level.WARNING, k -> new ArrayList<>())
+                            .add("Legacy dispatcher not operational; transparent fallback not possible");
+                } else {
+                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                            .add("Legacy dispatcher is operational; transparent fallback possible");
                 }
             }
         } catch (IOException e) {
             report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                     .add(e.getMessage());
         }
+
         return new ValidationResponse(getClass().getSimpleName(), valid, report, subsystems);
     }
 
