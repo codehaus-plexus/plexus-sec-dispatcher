@@ -40,6 +40,7 @@ import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.xml.sax.InputSource;
 
@@ -97,6 +98,17 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException("Decrypt failed", e);
         }
+    }
+
+    @Override
+    public SecDispatcher.ValidationResponse validateConfiguration(Map<String, String> config) {
+        return new SecDispatcher.ValidationResponse(
+                getClass().getSimpleName(),
+                false,
+                Map.of(
+                        SecDispatcher.ValidationResponse.Level.ERROR,
+                        List.of("This dispatcher cannot and must not be directly used via configuration")),
+                List.of());
     }
 
     private String getMasterPassword() throws SecDispatcherException {

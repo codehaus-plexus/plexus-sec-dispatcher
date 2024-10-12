@@ -68,4 +68,9 @@ public interface Dispatcher {
      */
     String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException;
+
+    /**
+     * Validates dispatcher configuration.
+     */
+    SecDispatcher.ValidationResponse validateConfiguration(Map<String, String> config);
 }

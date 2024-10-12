@@ -14,6 +14,7 @@
 package org.codehaus.plexus.components.secdispatcher;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -82,4 +83,50 @@ public interface SecDispatcher {
      * @throws IOException In case of IO problem
      */
     void writeConfiguration(SettingsSecurity configuration) throws IOException;
+
+    /**
+     * The validation response.
+     */
+    final class ValidationResponse {
+        public enum Level {
+            INFO,
+            WARNING,
+            ERROR
+        };
+
+        private final String source;
+        private final boolean valid;
+        private final Map<Level, List<String>> report;
+        private final List<ValidationResponse> subsystems;
+
+        public ValidationResponse(
+                String source, boolean valid, Map<Level, List<String>> report, List<ValidationResponse> subsystems) {
+            this.source = source;
+            this.valid = valid;
+            this.report = report;
+            this.subsystems = subsystems;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public Map<Level, List<String>> getReport() {
+            return report;
+        }
+
+        public List<ValidationResponse> getSubsystems() {
+            return subsystems;
+        }
+    }
+
+    /**
+     * Performs a "deep validation" and reports the status. If return instance {@link ValidationResponse#isValid()}
+     * is {@code true}, configuration is usable.
+     */
+    ValidationResponse validateConfiguration();
 }

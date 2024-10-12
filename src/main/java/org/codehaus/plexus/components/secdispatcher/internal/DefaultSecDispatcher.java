@@ -16,6 +16,7 @@ package org.codehaus.plexus.components.secdispatcher.internal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -140,9 +141,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
         try {
             String bare = cipher.unDecorate(str);
             Map<String, String> attr = requireNonNull(stripAttributes(bare));
-            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                // TODO: log?
+            if (isLegacyPassword(str)) {
                 attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
+            }
+            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
+                throw new SecDispatcherException("Invalid encrypted string; mandatory attributes missing");
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);
@@ -175,9 +178,55 @@ public class DefaultSecDispatcher implements SecDispatcher {
         SecUtil.write(configurationFile, configuration, true);
     }
 
-    protected Map<String, String> prepareDispatcherConfig(String type) throws IOException {
+    @Override
+    public ValidationResponse validateConfiguration() {
+        HashMap<ValidationResponse.Level, List<String>> report = new HashMap<>();
+        ArrayList<ValidationResponse> subsystems = new ArrayList<>();
+        boolean valid = false;
+        try {
+            SettingsSecurity config = readConfiguration(false);
+            if (config == null) {
+                report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("No configuration file found on path " + configurationFile);
+            } else {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Configuration file present on path " + configurationFile);
+                String defaultDispatcher = config.getDefaultDispatcher();
+                if (defaultDispatcher == null) {
+                    report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                            .add("No default dispatcher set in configuration");
+                } else {
+                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                            .add("Default dispatcher set to " + defaultDispatcher);
+                    Dispatcher dispatcher = dispatchers.get(defaultDispatcher);
+                    if (dispatcher == null) {
+                        report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                                .add("Default dispatcher " + defaultDispatcher + " not present in system");
+                    } else {
+                        ValidationResponse dispatcherResponse =
+                                dispatcher.validateConfiguration(prepareDispatcherConfig(defaultDispatcher));
+                        subsystems.add(dispatcherResponse);
+                        if (!dispatcherResponse.isValid()) {
+                            report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                                    .add("Default dispatcher " + defaultDispatcher + " configuration is invalid");
+                        } else {
+                            valid = true;
+                            report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                                    .add("Default dispatcher " + defaultDispatcher + " configuration is valid");
+                        }
+                    }
+                }
+            }
+        } catch (IOException e) {
+            report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add(e.getMessage());
+        }
+        return new ValidationResponse(getClass().getSimpleName(), valid, report, subsystems);
+    }
+
+    protected Map<String, String> prepareDispatcherConfig(String name) throws IOException {
         HashMap<String, String> dispatcherConf = new HashMap<>();
-        Map<String, String> conf = SecUtil.getConfig(SecUtil.read(configurationFile), type);
+        Map<String, String> conf = SecUtil.getConfig(SecUtil.read(configurationFile), name);
         if (conf != null) {
             dispatcherConf.putAll(conf);
         }

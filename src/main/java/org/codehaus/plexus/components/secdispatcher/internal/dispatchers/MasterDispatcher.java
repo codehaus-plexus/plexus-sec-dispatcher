@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -123,6 +124,54 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException("Decrypt failed", e);
         }
+    }
+
+    @Override
+    public SecDispatcher.ValidationResponse validateConfiguration(Map<String, String> config) {
+        HashMap<SecDispatcher.ValidationResponse.Level, List<String>> report = new HashMap<>();
+        ArrayList<SecDispatcher.ValidationResponse> subsystems = new ArrayList<>();
+        boolean valid = false;
+        String masterCipher = config.get(CONF_MASTER_CIPHER);
+        if (masterCipher == null) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add("Master Cipher configuration missing");
+        } else {
+            if (!cipher.availableCiphers().contains(masterCipher)) {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("Master Cipher " + masterCipher + " not supported");
+            } else {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Master Cipher " + masterCipher + " supported");
+            }
+        }
+        String masterSource = config.get(CONF_MASTER_SOURCE);
+        if (masterSource == null) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add("Master Source configuration missing");
+        } else {
+            SecDispatcher.ValidationResponse masterSourceResponse = null;
+            for (MasterSource masterPasswordSource : masterSources.values()) {
+                masterSourceResponse = masterPasswordSource.validateConfiguration(masterSource);
+                if (masterSourceResponse != null) {
+                    break;
+                }
+            }
+            if (masterSourceResponse == null) {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("Master Source configuration `" + masterSource + "` not handled");
+            } else {
+                subsystems.add(masterSourceResponse);
+                if (!masterSourceResponse.isValid()) {
+                    report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                            .add("Master Source configuration `" + masterSource + "` invalid");
+                } else {
+                    report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                            .add("Master Source configuration `" + masterSource + "` valid");
+                    valid = true;
+                }
+            }
+        }
+        return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, subsystems);
     }
 
     private String getMasterPassword(Map<String, String> config) throws SecDispatcherException {

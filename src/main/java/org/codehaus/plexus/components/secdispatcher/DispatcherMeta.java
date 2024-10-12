@@ -10,7 +10,7 @@ import static java.util.Objects.requireNonNull;
  * Meta description of dispatcher.
  */
 public interface DispatcherMeta {
-    class Field {
+    final class Field {
         private final String key;
         private final boolean optional;
         private final String defaultValue;
@@ -67,7 +67,7 @@ public interface DispatcherMeta {
             return new Builder(key);
         }
 
-        public static class Builder {
+        public static final class Builder {
             private final String key;
             private boolean optional;
             private String defaultValue;

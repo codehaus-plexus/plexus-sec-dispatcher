@@ -43,6 +43,7 @@ public class DefaultSecDispatcherTest {
         SettingsSecurity sec = new SettingsSecurity();
         sec.setModelEncoding(StandardCharsets.UTF_8.name());
         sec.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
+        sec.setDefaultDispatcher(dispatcher);
         Config conf = new Config();
         conf.setName(dispatcher);
         for (Map.Entry<String, String> entry : config.entrySet()) {
@@ -76,6 +77,35 @@ public class DefaultSecDispatcherTest {
         roundtrip();
     }
 
+    @Test
+    void validate() throws Exception {
+        saveSec("master", Map.of("source", "system-property:masterPassword", "cipher", AESGCMNoPadding.CIPHER_ALG));
+        SecDispatcher secDispatcher = construct();
+        SecDispatcher.ValidationResponse response = secDispatcher.validateConfiguration();
+        assertTrue(response.isValid());
+        // secDispatcher
+        assertTrue(response.getReport().size() == 1);
+        assertTrue(response.getSubsystems().size() == 1);
+        // master dispatcher
+        assertTrue(response.getSubsystems().get(0).getReport().size() == 1);
+        assertTrue(response.getSubsystems().get(0).getSubsystems().size() == 1);
+        // master source
+        assertTrue(response.getSubsystems()
+                        .get(0)
+                        .getSubsystems()
+                        .get(0)
+                        .getReport()
+                        .size()
+                == 1);
+        assertTrue(response.getSubsystems()
+                        .get(0)
+                        .getSubsystems()
+                        .get(0)
+                        .getSubsystems()
+                        .size()
+                == 0);
+    }
+
     protected void roundtrip() throws Exception {
         DefaultSecDispatcher sd = construct();
 
@@ -83,7 +113,6 @@ public class DefaultSecDispatcherTest {
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         // example:
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
-        System.out.println(encrypted);
         assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
         assertTrue(encrypted.contains("n=master"));
         assertTrue(encrypted.contains("c=" + AESGCMNoPadding.CIPHER_ALG));

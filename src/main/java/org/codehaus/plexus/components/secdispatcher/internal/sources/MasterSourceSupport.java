@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import org.codehaus.plexus.components.secdispatcher.MasterSource;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 import static java.util.Objects.requireNonNull;
@@ -47,4 +48,13 @@ public abstract class MasterSourceSupport implements MasterSource {
     }
 
     protected abstract String doHandle(String transformed) throws SecDispatcherException;
+
+    public SecDispatcher.ValidationResponse validateConfiguration(String masterSource) {
+        if (matcher.test(masterSource)) {
+            return doValidateConfiguration(transformer.apply(masterSource));
+        }
+        return null;
+    }
+
+    protected abstract SecDispatcher.ValidationResponse doValidateConfiguration(String transformed);
 }

@@ -22,12 +22,19 @@ import javax.inject.Named;
 import javax.inject.Singleton;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.codehaus.plexus.components.secdispatcher.MasterSource;
 import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.PinEntry;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
@@ -76,5 +83,27 @@ public class PinEntryMasterSource extends PrefixMasterSourceSupport implements M
         } catch (IOException e) {
             throw new SecDispatcherException("Could not collect the password", e);
         }
+    }
+
+    @Override
+    protected SecDispatcher.ValidationResponse doValidateConfiguration(String transformed) {
+        HashMap<SecDispatcher.ValidationResponse.Level, List<String>> report = new HashMap<>();
+        boolean valid = false;
+
+        Path pinentry = Paths.get(transformed);
+        if (!Files.exists(pinentry)) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add("Configured pinentry command not found");
+        } else {
+            if (!Files.isExecutable(pinentry)) {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("Configured pinentry command is not executable");
+            } else {
+                report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Configured pinentry command exists and is executable");
+                valid = true;
+            }
+        }
+        return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, List.of());
     }
 }

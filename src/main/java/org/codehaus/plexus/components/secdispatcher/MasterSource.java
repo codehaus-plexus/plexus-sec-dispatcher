@@ -30,4 +30,13 @@ public interface MasterSource {
      * @throws SecDispatcherException If implementation does handle this masterSource, but cannot obtain master password
      */
     String handle(String config) throws SecDispatcherException;
+
+    /**
+     * Validates master source configuration.
+     * <ul>
+     *     <li>if the config cannot be handled by given source, return {@code null}</li>
+     *     <li>otherwise, implementation performs validation and returns non-{@code null} validation response</li>
+     * </ul>
+     */
+    SecDispatcher.ValidationResponse validateConfiguration(String config);
 }
