@@ -81,6 +81,8 @@ public class DefaultSecDispatcherTest {
     @Test
     void validate() throws Exception {
         saveSec("master", Map.of("source", "system-property:masterPassword", "cipher", AESGCMNoPadding.CIPHER_ALG));
+        System.setProperty("settings.security", "src/test/legacy/legacy-settings-security-1.xml");
+
         SecDispatcher secDispatcher = construct();
         SecDispatcher.ValidationResponse response = secDispatcher.validateConfiguration();
         assertTrue(response.isValid());
