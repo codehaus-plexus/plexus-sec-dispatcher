@@ -213,12 +213,12 @@ public class DefaultSecDispatcher implements SecDispatcher {
                             report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
                                     .add("Default dispatcher " + defaultDispatcher + " configuration is valid");
 
+                            // below is legacy check, that does not affect validity of config, is merely informational
                             Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);
                             if (legacy == null) {
                                 report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
                                         .add("Legacy dispatcher not present in system");
                             } else {
-                                // legacy is just "informational" does not affect overall status; merely allows fallback
                                 report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
                                         .add("Legacy dispatcher present in system");
                                 ValidationResponse legacyResponse =
