@@ -31,12 +31,12 @@ public interface SecDispatcher {
      *
      * @see #availableDispatchers()
      */
-    String DISPATCHER_NAME_ATTR = "n";
+    String DISPATCHER_NAME_ATTR = "name";
 
     /**
      * Attribute for version that dispatcher should use.
      */
-    String DISPATCHER_VERSION_ATTR = "v";
+    String DISPATCHER_VERSION_ATTR = "version";
 
     /**
      * Returns the set of available dispatcher metadata, never {@code null}.

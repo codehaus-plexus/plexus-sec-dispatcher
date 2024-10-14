@@ -40,9 +40,9 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     public static final String NAME = "master";
 
-    private static final String MASTER_CIPHER_ATTR = "c";
     private static final String CONF_MASTER_CIPHER = "cipher";
     private static final String CONF_MASTER_SOURCE = "source";
+    private static final String MASTER_CIPHER_ATTR = CONF_MASTER_CIPHER;
 
     private final PlexusCipher cipher;
     protected final Map<String, MasterSource> masterSources;
@@ -76,8 +76,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
                                         Field.Builder b =
                                                 Field.builder(e.getKey()).description(m.description());
                                         if (m.configTemplate().isPresent()) {
-                                            b = b.defaultValue(
-                                                    m.configTemplate().get());
+                                            b.defaultValue(m.configTemplate().get());
                                         }
                                         return b.build();
                                     } else {
