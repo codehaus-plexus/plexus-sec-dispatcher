@@ -108,16 +108,19 @@ public class DefaultSecDispatcher implements SecDispatcher {
                 attr = new HashMap<>(attr);
             }
             if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                attr.put(
-                        DISPATCHER_NAME_ATTR,
-                        requireNonNull(
-                                requireNonNull(SecUtil.read(configurationFile), "no configuration")
-                                        .getDefaultDispatcher(),
-                                "no default dispatcher set in configuration"));
+                SettingsSecurity conf = readConfiguration(false);
+                if (conf == null) {
+                    throw new SecDispatcherException("No configuration found");
+                }
+                String defaultDispatcher = conf.getDefaultDispatcher();
+                if (defaultDispatcher == null) {
+                    throw new SecDispatcherException("No defaultDispatcher set in configuration");
+                }
+                attr.put(DISPATCHER_NAME_ATTR, defaultDispatcher);
             }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);
-            if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
+            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
             Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
             HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
             resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
@@ -143,12 +146,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (isLegacyPassword(str)) {
                 attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
             }
-            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                throw new SecDispatcherException("Invalid encrypted string; mandatory attributes missing");
-            }
             String name = attr.get(DISPATCHER_NAME_ATTR);
             Dispatcher dispatcher = dispatchers.get(name);
-            if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + name);
+            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
             return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
@@ -285,7 +285,6 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     protected boolean isEncryptedString(String str) {
-        if (str == null) return false;
         return cipher.isEncryptedString(str);
     }
 }
