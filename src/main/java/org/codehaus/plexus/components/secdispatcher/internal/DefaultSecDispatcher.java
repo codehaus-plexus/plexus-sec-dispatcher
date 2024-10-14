@@ -145,21 +145,43 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
     }
 
+    /**
+     * <ul>
+     *     <li>Current: {[name=master,cipher=AES/GCM/NoPadding,version=4.0]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}</li>
+     * </ul>
+     */
     @Override
     public boolean isEncryptedString(String str) {
-        return str != null
+        boolean looksLike = str != null
                 && !str.isBlank()
                 && str.startsWith(SHIELD_BEGIN)
                 && str.endsWith(SHIELD_END)
                 && !unDecorate(str).contains(SHIELD_BEGIN)
                 && !unDecorate(str).contains(SHIELD_END);
+        if (looksLike) {
+            Map<String, String> attributes = stripAttributes(unDecorate(str));
+            return attributes.containsKey(DISPATCHER_NAME_ATTR) && attributes.containsKey(DISPATCHER_VERSION_ATTR);
+        }
+        return false;
     }
 
+    /**
+     * <ul>
+     *     <li>Legacy: {jSMOWnoPFgsHVpMvz5VrIt5kRbzGpI8u+9EF1iFQyJQ=}</li>
+     * </ul>
+     */
     @Override
     public boolean isLegacyEncryptedString(String str) {
-        if (!isEncryptedString(str)) return false;
-        Map<String, String> attr = requireNonNull(stripAttributes(unDecorate(str)));
-        return !attr.containsKey(DISPATCHER_NAME_ATTR);
+        boolean looksLike = str != null
+                && !str.isBlank()
+                && str.startsWith(SHIELD_BEGIN)
+                && str.endsWith(SHIELD_END)
+                && !unDecorate(str).contains(SHIELD_BEGIN)
+                && !unDecorate(str).contains(SHIELD_END);
+        if (looksLike) {
+            return stripAttributes(unDecorate(str)).isEmpty();
+        }
+        return false;
     }
 
     @Override

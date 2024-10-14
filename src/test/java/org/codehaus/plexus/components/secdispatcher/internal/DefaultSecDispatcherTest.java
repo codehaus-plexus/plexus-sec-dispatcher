@@ -114,28 +114,29 @@ public class DefaultSecDispatcherTest {
     @Test
     void detection() {
         SecDispatcher secDispatcher = construct();
-        assertFalse(secDispatcher.isEncryptedString(null));
-        assertFalse(secDispatcher.isEncryptedString(""));
-        assertFalse(secDispatcher.isEncryptedString("foo"));
+        assertFalse(secDispatcher.isAnyEncryptedString(null));
+        assertFalse(secDispatcher.isAnyEncryptedString(""));
+        assertFalse(secDispatcher.isAnyEncryptedString("foo"));
 
-        assertTrue(secDispatcher.isEncryptedString("{foo}"));
+        assertFalse(secDispatcher.isEncryptedString("{foo}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{foo}"));
 
-        assertTrue(secDispatcher.isEncryptedString("{12345678901234567890123456789012345678901234567890}"));
+        assertFalse(secDispatcher.isEncryptedString("{12345678901234567890123456789012345678901234567890}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{12345678901234567890123456789012345678901234567890}"));
 
+        // contains {} in the middle
         assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
         assertFalse(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
 
-        assertTrue(secDispatcher.isEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+        assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
 
         assertTrue(
                 secDispatcher.isEncryptedString(
-                        "{[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
+                        "{[name=master,cipher=AES/GCM/NoPadding,version=4.0,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
         assertFalse(
                 secDispatcher.isLegacyEncryptedString(
-                        "{[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
+                        "{[name=master,cipher=AES/GCM/NoPadding,version=4.0,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
     }
 
     protected void roundtrip() throws Exception {
