@@ -45,11 +45,6 @@
       <artifactId>slf4j-api</artifactId>
       <version>${version.slf4j}</version>
     </dependency>
-    <dependency>
-      <groupId>org.codehaus.plexus</groupId>
-      <artifactId>plexus-cipher</artifactId>
-      <version>3.0.0</version>
-    </dependency>
 
     <dependency>
       <groupId>javax.inject</groupId>

@@ -23,8 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.plexus.components.cipher.PlexusCipher;
-import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.Cipher;
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.MasterSource;
@@ -47,12 +46,12 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
      */
     private static final String MASTER_CIPHER_ATTR = CONF_MASTER_CIPHER;
 
-    private final PlexusCipher cipher;
+    protected final Map<String, Cipher> masterCiphers;
     protected final Map<String, MasterSource> masterSources;
 
     @Inject
-    public MasterDispatcher(PlexusCipher cipher, Map<String, MasterSource> masterSources) {
-        this.cipher = cipher;
+    public MasterDispatcher(Map<String, Cipher> masterCiphers, Map<String, MasterSource> masterSources) {
+        this.masterCiphers = masterCiphers;
         this.masterSources = masterSources;
     }
 
@@ -94,7 +93,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
                 Field.builder(CONF_MASTER_CIPHER)
                         .optional(false)
                         .description("Cipher to use with master password")
-                        .options(cipher.availableCiphers().stream()
+                        .options(masterCiphers.keySet().stream()
                                 .map(c -> Field.builder(c).description(c).build())
                                 .toList())
                         .build());
@@ -103,26 +102,18 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     @Override
     public EncryptPayload encrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException {
-        try {
-            String masterCipher = getMasterCipher(config, true);
-            String encrypted = cipher.encrypt(masterCipher, str, getMasterPassword(config));
-            HashMap<String, String> attr = new HashMap<>(attributes);
-            attr.put(MASTER_CIPHER_ATTR, masterCipher);
-            return new EncryptPayload(attr, encrypted);
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException("Encrypt failed", e);
-        }
+        String masterCipher = getMasterCipher(config, true);
+        String encrypted = requireCipher(masterCipher).encrypt(str, getMasterPassword(config));
+        HashMap<String, String> attr = new HashMap<>(attributes);
+        attr.put(MASTER_CIPHER_ATTR, masterCipher);
+        return new EncryptPayload(attr, encrypted);
     }
 
     @Override
     public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException {
-        try {
-            String masterCipher = getMasterCipher(attributes, false);
-            return cipher.decrypt(masterCipher, str, getMasterPassword(config));
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException("Decrypt failed", e);
-        }
+        String masterCipher = getMasterCipher(attributes, false);
+        return requireCipher(masterCipher).decrypt(str, getMasterPassword(config));
     }
 
     @Override
@@ -135,7 +126,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                     .add("Cipher configuration missing");
         } else {
-            if (!cipher.availableCiphers().contains(masterCipher)) {
+            if (!masterCiphers.containsKey(masterCipher)) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                         .add("Configured Cipher not supported");
             } else {
@@ -173,7 +164,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, subsystems);
     }
 
-    private String getMasterPassword(Map<String, String> config) throws SecDispatcherException {
+    protected String getMasterPassword(Map<String, String> config) throws SecDispatcherException {
         String masterSource = config.get(CONF_MASTER_SOURCE);
         if (masterSource == null) {
             throw new SecDispatcherException("Invalid configuration: Missing configuration " + CONF_MASTER_SOURCE);
@@ -185,7 +176,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         throw new SecDispatcherException("No source handled the given masterSource: " + masterSource);
     }
 
-    private String getMasterCipher(Map<String, String> source, boolean config) throws SecDispatcherException {
+    protected String getMasterCipher(Map<String, String> source, boolean config) throws SecDispatcherException {
         if (config) {
             String masterCipher = source.get(CONF_MASTER_CIPHER);
             if (masterCipher == null) {
@@ -199,5 +190,13 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
             }
             return masterCipher;
         }
+    }
+
+    protected Cipher requireCipher(String name) {
+        Cipher masterCipher = masterCiphers.get(name);
+        if (masterCipher == null) {
+            throw new SecDispatcherException("No cipher exist with name " + name);
+        }
+        return masterCipher;
     }
 }

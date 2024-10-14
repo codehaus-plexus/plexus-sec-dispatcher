@@ -64,9 +64,20 @@ public interface SecDispatcher {
     String decrypt(String str) throws SecDispatcherException, IOException;
 
     /**
-     * Returns {@code true} if passed in string contains "legacy" password (Maven3 kind).
+     * Returns {@code true} if passed in string is POSSIBLY encrypted string. Forms of encrypted strings are:
+     * <ul>
+     *     <li>Legacy: {jSMOWnoPFgsHVpMvz5VrIt5kRbzGpI8u+9EF1iFQyJQ=}</li>
+     *     <li>Current: {[name=master,cipher=AES/GCM/NoPadding,version=4.0]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}</li>
+     * </ul>
      */
-    boolean isLegacyPassword(String str);
+    boolean isEncryptedString(String str);
+
+    /**
+     * Returns {@code true} if method {@link #isEncryptedString(String)} returns {@code true} with passed in string, and
+     * there are no attributes detected. In other words, returns {@code true} if passed in string contains
+     * "legacy" (Maven3 kind) password.
+     */
+    boolean isLegacyEncryptedString(String str);
 
     /**
      * Reads the effective configuration, eventually creating new instance if not present.
