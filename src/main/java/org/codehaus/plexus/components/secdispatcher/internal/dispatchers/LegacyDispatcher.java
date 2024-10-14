@@ -38,8 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.codehaus.plexus.components.cipher.PlexusCipher;
-import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.CipherException;
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
@@ -56,12 +55,10 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
 
     private static final String MASTER_MASTER_PASSWORD = "settings.security";
 
-    private final PlexusCipher plexusCipher;
     private final LegacyCipher legacyCipher;
 
     @Inject
-    public LegacyDispatcher(PlexusCipher plexusCipher) {
-        this.plexusCipher = plexusCipher;
+    public LegacyDispatcher() {
         this.legacyCipher = new LegacyCipher();
     }
 
@@ -95,15 +92,11 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
     @Override
     public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException {
-        try {
-            String masterPassword = getMasterPassword();
-            if (masterPassword == null) {
-                throw new SecDispatcherException("Master password could not be obtained");
-            }
-            return legacyCipher.decrypt64(str, masterPassword);
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException("Decrypt failed", e);
+        String masterPassword = getMasterPassword();
+        if (masterPassword == null) {
+            throw new SecDispatcherException("Master password could not be obtained");
         }
+        return legacyCipher.decrypt64(str, masterPassword);
     }
 
     @Override
@@ -129,7 +122,7 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
                     valid = true;
                 }
             }
-        } catch (PlexusCipherException e) {
+        } catch (CipherException e) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                     .add("Legacy master password decryption failed");
         }
@@ -137,11 +130,16 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
     }
 
     private String getMasterPassword() throws SecDispatcherException {
-        String encryptedMasterPassword = getMasterMasterPasswordFromSettingsSecurityXml();
-        if (encryptedMasterPassword == null) {
+        String masterPassword = getMasterMasterPasswordFromSettingsSecurityXml();
+        if (masterPassword == null) {
             return null;
         }
-        return legacyCipher.decrypt64(plexusCipher.unDecorate(encryptedMasterPassword), MASTER_MASTER_PASSWORD);
+        if (masterPassword.startsWith("{") && masterPassword.endsWith("}")) {
+            return legacyCipher.decrypt64(
+                    masterPassword.substring(1, masterPassword.length() - 1), MASTER_MASTER_PASSWORD);
+        } else {
+            return masterPassword;
+        }
     }
 
     private String getMasterMasterPasswordFromSettingsSecurityXml() {
@@ -172,7 +170,7 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
         private static final String KEY_ALG = "AES";
         private static final String CIPHER_ALG = "AES/CBC/PKCS5Padding";
 
-        private String decrypt64(final String encryptedText, final String password) throws PlexusCipherException {
+        private String decrypt64(final String encryptedText, final String password) throws CipherException {
             try {
                 byte[] allEncryptedBytes = Base64.getDecoder().decode(encryptedText.getBytes());
                 int totalLen = allEncryptedBytes.length;
@@ -185,7 +183,7 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
                 byte[] clearBytes = cipher.doFinal(encryptedBytes);
                 return new String(clearBytes, STRING_ENCODING);
             } catch (Exception e) {
-                throw new PlexusCipherException("Error decrypting", e);
+                throw new CipherException("Error decrypting", e);
             }
         }
 

@@ -15,7 +15,6 @@ package org.codehaus.plexus.components.secdispatcher.internal.dispatchers;
 
 import java.util.Map;
 
-import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -36,7 +35,7 @@ public class LegacyDispatcherTest {
             })
     void smoke(String xml) {
         System.setProperty("settings.security", xml);
-        LegacyDispatcher legacyDispatcher = new LegacyDispatcher(new DefaultPlexusCipher(Map.of()));
+        LegacyDispatcher legacyDispatcher = new LegacyDispatcher();
         // SecDispatcher "un decorates" the PW
         String cleartext = legacyDispatcher.decrypt("L6L/HbmrY+cH+sNkphnq3fguYepTpM04WlIXb8nB1pk=", Map.of(), Map.of());
         assertEquals("password", cleartext);

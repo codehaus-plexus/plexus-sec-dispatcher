@@ -25,8 +25,6 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
-import org.codehaus.plexus.components.cipher.PlexusCipher;
-import org.codehaus.plexus.components.cipher.PlexusCipherException;
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
@@ -48,15 +46,15 @@ import static java.util.Objects.requireNonNull;
  * @author Oleg Gusakov
  */
 public class DefaultSecDispatcher implements SecDispatcher {
+    public static final String SHIELD_BEGIN = "{";
+    public static final String SHIELD_END = "}";
     public static final String ATTR_START = "[";
     public static final String ATTR_STOP = "]";
 
-    protected final PlexusCipher cipher;
     protected final Map<String, Dispatcher> dispatchers;
     protected final Path configurationFile;
 
-    public DefaultSecDispatcher(PlexusCipher cipher, Map<String, Dispatcher> dispatchers, Path configurationFile) {
-        this.cipher = requireNonNull(cipher);
+    public DefaultSecDispatcher(Map<String, Dispatcher> dispatchers, Path configurationFile) {
         this.dispatchers = requireNonNull(dispatchers);
         this.configurationFile = requireNonNull(configurationFile);
 
@@ -100,66 +98,90 @@ public class DefaultSecDispatcher implements SecDispatcher {
     @Override
     public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException {
         if (isEncryptedString(str)) return str;
-
-        try {
-            if (attr == null) {
-                attr = new HashMap<>();
-            } else {
-                attr = new HashMap<>(attr);
-            }
-            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
-                SettingsSecurity conf = readConfiguration(false);
-                if (conf == null) {
-                    throw new SecDispatcherException("No configuration found");
-                }
-                String defaultDispatcher = conf.getDefaultDispatcher();
-                if (defaultDispatcher == null) {
-                    throw new SecDispatcherException("No defaultDispatcher set in configuration");
-                }
-                attr.put(DISPATCHER_NAME_ATTR, defaultDispatcher);
-            }
-            String name = attr.get(DISPATCHER_NAME_ATTR);
-            Dispatcher dispatcher = dispatchers.get(name);
-            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
-            Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
-            HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
-            resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
-            resultAttributes.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
-            String res = ATTR_START
-                    + resultAttributes.entrySet().stream()
-                            .map(e -> e.getKey() + "=" + e.getValue())
-                            .collect(Collectors.joining(","))
-                    + ATTR_STOP;
-            res += payload.getEncrypted();
-            return cipher.decorate(res);
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException(e.getMessage(), e);
+        if (attr == null) {
+            attr = new HashMap<>();
+        } else {
+            attr = new HashMap<>(attr);
         }
+        if (attr.get(DISPATCHER_NAME_ATTR) == null) {
+            SettingsSecurity conf = readConfiguration(false);
+            if (conf == null) {
+                throw new SecDispatcherException("No configuration found");
+            }
+            String defaultDispatcher = conf.getDefaultDispatcher();
+            if (defaultDispatcher == null) {
+                throw new SecDispatcherException("No defaultDispatcher set in configuration");
+            }
+            attr.put(DISPATCHER_NAME_ATTR, defaultDispatcher);
+        }
+        String name = attr.get(DISPATCHER_NAME_ATTR);
+        Dispatcher dispatcher = dispatchers.get(name);
+        if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+        Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
+        HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
+        resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
+        resultAttributes.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
+        return SHIELD_BEGIN
+                + ATTR_START
+                + resultAttributes.entrySet().stream()
+                        .map(e -> e.getKey() + "=" + e.getValue())
+                        .collect(Collectors.joining(","))
+                + ATTR_STOP
+                + payload.getEncrypted()
+                + SHIELD_END;
     }
 
     @Override
     public String decrypt(String str) throws SecDispatcherException, IOException {
         if (!isEncryptedString(str)) return str;
-        try {
-            String bare = cipher.unDecorate(str);
-            Map<String, String> attr = requireNonNull(stripAttributes(bare));
-            if (isLegacyPassword(str)) {
-                attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
-            }
-            String name = attr.get(DISPATCHER_NAME_ATTR);
-            Dispatcher dispatcher = dispatchers.get(name);
-            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
-            return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
-        } catch (PlexusCipherException e) {
-            throw new SecDispatcherException(e.getMessage(), e);
+        String bare = unDecorate(str);
+        Map<String, String> attr = requireNonNull(stripAttributes(bare));
+        if (isLegacyEncryptedString(str)) {
+            attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
         }
+        String name = attr.get(DISPATCHER_NAME_ATTR);
+        Dispatcher dispatcher = dispatchers.get(name);
+        if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+        return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
     }
 
+    /**
+     * <ul>
+     *     <li>Current: {[name=master,cipher=AES/GCM/NoPadding,version=4.0]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}</li>
+     * </ul>
+     */
     @Override
-    public boolean isLegacyPassword(String str) {
-        if (!isEncryptedString(str)) return false;
-        Map<String, String> attr = requireNonNull(stripAttributes(cipher.unDecorate(str)));
-        return !attr.containsKey(DISPATCHER_NAME_ATTR);
+    public boolean isEncryptedString(String str) {
+        boolean looksLike = str != null
+                && !str.isBlank()
+                && str.startsWith(SHIELD_BEGIN)
+                && str.endsWith(SHIELD_END)
+                && !unDecorate(str).contains(SHIELD_BEGIN)
+                && !unDecorate(str).contains(SHIELD_END);
+        if (looksLike) {
+            Map<String, String> attributes = stripAttributes(unDecorate(str));
+            return attributes.containsKey(DISPATCHER_NAME_ATTR) && attributes.containsKey(DISPATCHER_VERSION_ATTR);
+        }
+        return false;
+    }
+
+    /**
+     * <ul>
+     *     <li>Legacy: {jSMOWnoPFgsHVpMvz5VrIt5kRbzGpI8u+9EF1iFQyJQ=}</li>
+     * </ul>
+     */
+    @Override
+    public boolean isLegacyEncryptedString(String str) {
+        boolean looksLike = str != null
+                && !str.isBlank()
+                && str.startsWith(SHIELD_BEGIN)
+                && str.endsWith(SHIELD_END)
+                && !unDecorate(str).contains(SHIELD_BEGIN)
+                && !unDecorate(str).contains(SHIELD_END);
+        if (looksLike) {
+            return stripAttributes(unDecorate(str)).isEmpty();
+        }
+        return false;
     }
 
     @Override
@@ -284,7 +306,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return result;
     }
 
-    protected boolean isEncryptedString(String str) {
-        return cipher.isEncryptedString(str);
+    protected String unDecorate(String str) {
+        return str.substring(SHIELD_BEGIN.length(), str.length() - SHIELD_END.length());
     }
 }

@@ -20,9 +20,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
-import org.codehaus.plexus.components.cipher.internal.AESGCMNoPadding;
-import org.codehaus.plexus.components.cipher.internal.DefaultPlexusCipher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
@@ -35,6 +34,7 @@ import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfig
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DefaultSecDispatcherTest {
@@ -93,20 +93,50 @@ public class DefaultSecDispatcherTest {
         assertEquals(1, response.getSubsystems().get(0).getReport().size());
         assertEquals(1, response.getSubsystems().get(0).getSubsystems().size());
         // master source
-        assertTrue(response.getSubsystems()
+        assertEquals(
+                1,
+                response.getSubsystems()
                         .get(0)
                         .getSubsystems()
                         .get(0)
                         .getReport()
-                        .size()
-                == 1);
-        assertTrue(response.getSubsystems()
+                        .size());
+        assertEquals(
+                0,
+                response.getSubsystems()
                         .get(0)
                         .getSubsystems()
                         .get(0)
                         .getSubsystems()
-                        .size()
-                == 0);
+                        .size());
+    }
+
+    @Test
+    void detection() {
+        SecDispatcher secDispatcher = construct();
+        assertFalse(secDispatcher.isAnyEncryptedString(null));
+        assertFalse(secDispatcher.isAnyEncryptedString(""));
+        assertFalse(secDispatcher.isAnyEncryptedString("foo"));
+
+        assertFalse(secDispatcher.isEncryptedString("{foo}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("{foo}"));
+
+        assertFalse(secDispatcher.isEncryptedString("{12345678901234567890123456789012345678901234567890}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("{12345678901234567890123456789012345678901234567890}"));
+
+        // contains {} in the middle
+        assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+        assertFalse(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+
+        assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+
+        assertTrue(
+                secDispatcher.isEncryptedString(
+                        "{[name=master,cipher=AES/GCM/NoPadding,version=4.0,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
+        assertFalse(
+                secDispatcher.isLegacyEncryptedString(
+                        "{[name=master,cipher=AES/GCM/NoPadding,version=4.0,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}"));
     }
 
     protected void roundtrip() throws Exception {
@@ -126,13 +156,11 @@ public class DefaultSecDispatcherTest {
     }
 
     protected DefaultSecDispatcher construct() {
-        DefaultPlexusCipher dpc = new DefaultPlexusCipher(Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding()));
         return new DefaultSecDispatcher(
-                dpc,
                 Map.of(
                         "master",
                         new MasterDispatcher(
-                                dpc,
+                                Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding()),
                                 Map.of(
                                         EnvMasterSource.NAME,
                                         new EnvMasterSource(),
@@ -141,7 +169,7 @@ public class DefaultSecDispatcherTest {
                                         GpgAgentMasterSource.NAME,
                                         new GpgAgentMasterSource())),
                         "legacy",
-                        new LegacyDispatcher(dpc)),
+                        new LegacyDispatcher()),
                 CONFIG_PATH);
     }
 }
