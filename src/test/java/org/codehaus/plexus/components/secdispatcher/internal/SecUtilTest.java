@@ -41,13 +41,13 @@ public class SecUtilTest {
     String _propName = "pname";
     String _propVal = "pval";
 
-    private void saveSec(String masterSource) throws IOException {
-        saveSec("./target/sec.xml", masterSource);
+    private void saveSec(String defaultDispatcher) throws IOException {
+        saveSec("./target/sec.xml", defaultDispatcher);
     }
 
-    private void saveSec(String path, String masterSource) throws IOException {
+    private void saveSec(String path, String defaultDispatcher) throws IOException {
         SettingsSecurity sec = new SettingsSecurity();
-        sec.setMasterSource(masterSource);
+        sec.setDefaultDispatcher(defaultDispatcher);
         ConfigProperty cp = new ConfigProperty();
         cp.setName(_propName);
         cp.setValue(_propVal);
@@ -68,9 +68,9 @@ public class SecUtilTest {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
-        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(SecUtil.specVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
-        assertEquals("magic:mighty", config.getMasterSource());
+        assertEquals("magic:mighty", config.getDefaultDispatcher());
         SecUtil.write(path, config, false);
     }
 
@@ -79,9 +79,9 @@ public class SecUtilTest {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
-        assertEquals(SettingsSecurity.class.getPackage().getSpecificationVersion(), config.getModelVersion());
+        assertEquals(SecUtil.specVersion(), config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
-        assertEquals("magic:mighty", config.getMasterSource());
+        assertEquals("magic:mighty", config.getDefaultDispatcher());
         SecUtil.write(path, config, true);
         assertTrue(Files.exists(path));
         assertTrue(Files.exists(path.getParent().resolve(path.getFileName() + ".bak")));

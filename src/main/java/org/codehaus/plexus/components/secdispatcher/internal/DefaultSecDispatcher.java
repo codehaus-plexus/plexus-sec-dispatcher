@@ -13,14 +13,13 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -28,69 +27,110 @@ import java.util.stream.Collectors;
 
 import org.codehaus.plexus.components.cipher.PlexusCipher;
 import org.codehaus.plexus.components.cipher.PlexusCipherException;
+import org.codehaus.plexus.components.secdispatcher.Dispatcher;
+import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 
 import static java.util.Objects.requireNonNull;
 
 /**
+ * Note: this implementation is NOT a JSR330 component. Integrating apps anyway want to customize it (at least
+ * the name and location of configuration file), so instead as before (providing "bad" configuration file just
+ * to have one), it is the duty of integrator to wrap and "finish" the implementation in a way it suits the
+ * integrator. Also, using "globals" like Java System Properties are bad thing, and it is integrator who knows
+ * what is needed anyway.
+ * <p>
+ * Recommended way for integration is to create JSR330 {@link javax.inject.Provider}.
+ *
  * @author Oleg Gusakov
  */
-@Singleton
-@Named
 public class DefaultSecDispatcher implements SecDispatcher {
     public static final String ATTR_START = "[";
     public static final String ATTR_STOP = "]";
 
     protected final PlexusCipher cipher;
-    protected final Map<String, MasterPasswordSource> masterPasswordSources;
     protected final Map<String, Dispatcher> dispatchers;
-    protected final String configurationFile;
+    protected final Path configurationFile;
 
-    @Inject
-    public DefaultSecDispatcher(
-            PlexusCipher cipher,
-            Map<String, MasterPasswordSource> masterPasswordSources,
-            Map<String, Dispatcher> dispatchers,
-            @Named("${configurationFile:-" + DEFAULT_CONFIGURATION + "}") final String configurationFile) {
+    public DefaultSecDispatcher(PlexusCipher cipher, Map<String, Dispatcher> dispatchers, Path configurationFile) {
         this.cipher = requireNonNull(cipher);
-        this.masterPasswordSources = requireNonNull(masterPasswordSources);
         this.dispatchers = requireNonNull(dispatchers);
         this.configurationFile = requireNonNull(configurationFile);
+
+        // file may or may not exist, but one thing is certain: it cannot be an exiting directory
+        if (Files.isDirectory(configurationFile)) {
+            throw new IllegalArgumentException("configurationFile cannot be a directory");
+        }
     }
 
     @Override
-    public Set<String> availableDispatchers() {
-        return Set.copyOf(dispatchers.keySet());
+    public Set<DispatcherMeta> availableDispatchers() {
+        return Set.copyOf(
+                dispatchers.entrySet().stream().map(this::dispatcherMeta).collect(Collectors.toSet()));
+    }
+
+    private DispatcherMeta dispatcherMeta(Map.Entry<String, Dispatcher> dispatcher) {
+        // sisu components are lazy!
+        Dispatcher d = dispatcher.getValue();
+        if (d instanceof DispatcherMeta meta) {
+            return meta;
+        } else {
+            return new DispatcherMeta() {
+                @Override
+                public String name() {
+                    return dispatcher.getKey();
+                }
+
+                @Override
+                public String displayName() {
+                    return dispatcher.getKey() + " (needs manual configuration)";
+                }
+
+                @Override
+                public Collection<Field> fields() {
+                    return List.of();
+                }
+            };
+        }
     }
 
     @Override
-    public Set<String> availableCiphers() {
-        return cipher.availableCiphers();
-    }
-
-    @Override
-    public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException {
+    public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException {
         if (isEncryptedString(str)) return str;
 
         try {
-            String res;
-            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                SettingsSecurity sec = getConfiguration(true);
-                String master = getMasterPassword(sec, true);
-                res = cipher.encrypt(getMasterCipher(sec), str, master);
+            if (attr == null) {
+                attr = new HashMap<>();
             } else {
-                String type = attr.get(DISPATCHER_NAME_ATTR);
-                Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
-                res = ATTR_START
-                        + attr.entrySet().stream()
-                                .map(e -> e.getKey() + "=" + e.getValue())
-                                .collect(Collectors.joining(","))
-                        + ATTR_STOP;
-                res += dispatcher.encrypt(str, attr, prepareDispatcherConfig(type));
+                attr = new HashMap<>(attr);
             }
+            if (attr.get(DISPATCHER_NAME_ATTR) == null) {
+                SettingsSecurity conf = readConfiguration(false);
+                if (conf == null) {
+                    throw new SecDispatcherException("No configuration found");
+                }
+                String defaultDispatcher = conf.getDefaultDispatcher();
+                if (defaultDispatcher == null) {
+                    throw new SecDispatcherException("No defaultDispatcher set in configuration");
+                }
+                attr.put(DISPATCHER_NAME_ATTR, defaultDispatcher);
+            }
+            String name = attr.get(DISPATCHER_NAME_ATTR);
+            Dispatcher dispatcher = dispatchers.get(name);
+            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+            Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
+            HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
+            resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
+            resultAttributes.put(SecDispatcher.DISPATCHER_VERSION_ATTR, SecUtil.specVersion());
+            String res = ATTR_START
+                    + resultAttributes.entrySet().stream()
+                            .map(e -> e.getKey() + "=" + e.getValue())
+                            .collect(Collectors.joining(","))
+                    + ATTR_STOP;
+            res += payload.getEncrypted();
             return cipher.decorate(res);
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
@@ -98,29 +138,33 @@ public class DefaultSecDispatcher implements SecDispatcher {
     }
 
     @Override
-    public String decrypt(String str) throws SecDispatcherException {
+    public String decrypt(String str) throws SecDispatcherException, IOException {
         if (!isEncryptedString(str)) return str;
         try {
             String bare = cipher.unDecorate(str);
-            Map<String, String> attr = stripAttributes(bare);
-            if (attr == null || attr.get(DISPATCHER_NAME_ATTR) == null) {
-                SettingsSecurity sec = getConfiguration(true);
-                String master = getMasterPassword(sec, true);
-                return cipher.decrypt(getMasterCipher(sec), bare, master);
-            } else {
-                String type = attr.get(DISPATCHER_NAME_ATTR);
-                Dispatcher dispatcher = dispatchers.get(type);
-                if (dispatcher == null) throw new SecDispatcherException("no dispatcher for name " + type);
-                return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(type));
+            Map<String, String> attr = requireNonNull(stripAttributes(bare));
+            if (isLegacyPassword(str)) {
+                attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
             }
+            String name = attr.get(DISPATCHER_NAME_ATTR);
+            Dispatcher dispatcher = dispatchers.get(name);
+            if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+            return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
         } catch (PlexusCipherException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
     }
 
     @Override
+    public boolean isLegacyPassword(String str) {
+        if (!isEncryptedString(str)) return false;
+        Map<String, String> attr = requireNonNull(stripAttributes(cipher.unDecorate(str)));
+        return !attr.containsKey(DISPATCHER_NAME_ATTR);
+    }
+
+    @Override
     public SettingsSecurity readConfiguration(boolean createIfMissing) throws IOException {
-        SettingsSecurity configuration = SecUtil.read(getConfigurationPath());
+        SettingsSecurity configuration = SecUtil.read(configurationFile);
         if (configuration == null && createIfMissing) {
             configuration = new SettingsSecurity();
         }
@@ -130,24 +174,86 @@ public class DefaultSecDispatcher implements SecDispatcher {
     @Override
     public void writeConfiguration(SettingsSecurity configuration) throws IOException {
         requireNonNull(configuration, "configuration is null");
-        SecUtil.write(getConfigurationPath(), configuration, true);
+        SecUtil.write(configurationFile, configuration, true);
     }
 
-    private Map<String, String> prepareDispatcherConfig(String type) {
-        HashMap<String, String> dispatcherConf = new HashMap<>();
-        SettingsSecurity sec = getConfiguration(false);
-        String master = getMasterPassword(sec, false);
-        if (master != null) {
-            dispatcherConf.put(Dispatcher.CONF_MASTER_PASSWORD, master);
+    @Override
+    public ValidationResponse validateConfiguration() {
+        HashMap<ValidationResponse.Level, List<String>> report = new HashMap<>();
+        ArrayList<ValidationResponse> subsystems = new ArrayList<>();
+        boolean valid = false;
+        try {
+            SettingsSecurity config = readConfiguration(false);
+            if (config == null) {
+                report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                        .add("No configuration file found on path " + configurationFile);
+            } else {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Configuration file present on path " + configurationFile);
+                String defaultDispatcher = config.getDefaultDispatcher();
+                if (defaultDispatcher == null) {
+                    report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                            .add("No default dispatcher set in configuration");
+                } else {
+                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                            .add("Default dispatcher configured");
+                    Dispatcher dispatcher = dispatchers.get(defaultDispatcher);
+                    if (dispatcher == null) {
+                        report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                                .add("Configured default dispatcher not present in system");
+                    } else {
+                        ValidationResponse dispatcherResponse =
+                                dispatcher.validateConfiguration(prepareDispatcherConfig(defaultDispatcher));
+                        subsystems.add(dispatcherResponse);
+                        if (!dispatcherResponse.isValid()) {
+                            report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                                    .add("Configured default dispatcher configuration is invalid");
+                        } else {
+                            valid = true;
+                            report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                                    .add("Configured default dispatcher configuration is valid");
+                        }
+                    }
+                }
+            }
+
+            // below is legacy check, that does not affect validity of config, is merely informational
+            Dispatcher legacy = dispatchers.get(LegacyDispatcher.NAME);
+            if (legacy == null) {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Legacy dispatcher not present in system");
+            } else {
+                report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                        .add("Legacy dispatcher present in system");
+                ValidationResponse legacyResponse =
+                        legacy.validateConfiguration(prepareDispatcherConfig(LegacyDispatcher.NAME));
+                subsystems.add(legacyResponse);
+                if (!legacyResponse.isValid()) {
+                    report.computeIfAbsent(ValidationResponse.Level.WARNING, k -> new ArrayList<>())
+                            .add("Legacy dispatcher not operational; transparent fallback not possible");
+                } else {
+                    report.computeIfAbsent(ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                            .add("Legacy dispatcher is operational; transparent fallback possible");
+                }
+            }
+        } catch (IOException e) {
+            report.computeIfAbsent(ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add(e.getMessage());
         }
-        Map<String, String> conf = SecUtil.getConfig(sec, type);
+
+        return new ValidationResponse(getClass().getSimpleName(), valid, report, subsystems);
+    }
+
+    protected Map<String, String> prepareDispatcherConfig(String name) throws IOException {
+        HashMap<String, String> dispatcherConf = new HashMap<>();
+        Map<String, String> conf = SecUtil.getConfig(SecUtil.read(configurationFile), name);
         if (conf != null) {
             dispatcherConf.putAll(conf);
         }
         return dispatcherConf;
     }
 
-    private String strip(String str) {
+    protected String strip(String str) {
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
@@ -156,7 +262,8 @@ public class DefaultSecDispatcher implements SecDispatcher {
         return str;
     }
 
-    private Map<String, String> stripAttributes(String str) {
+    protected Map<String, String> stripAttributes(String str) {
+        HashMap<String, String> result = new HashMap<>();
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
@@ -164,68 +271,20 @@ public class DefaultSecDispatcher implements SecDispatcher {
             if (stop == start + 1) return null;
             String attrs = str.substring(start + 1, stop).trim();
             if (attrs.isEmpty()) return null;
-            Map<String, String> res = null;
             StringTokenizer st = new StringTokenizer(attrs, ",");
             while (st.hasMoreTokens()) {
-                if (res == null) res = new HashMap<>(st.countTokens());
                 String pair = st.nextToken();
                 int pos = pair.indexOf('=');
                 if (pos == -1) throw new SecDispatcherException("Attribute malformed: " + pair);
                 String key = pair.substring(0, pos).trim();
                 String val = pair.substring(pos + 1).trim();
-                res.put(key, val);
+                result.put(key, val);
             }
-            return res;
         }
-        return null;
+        return result;
     }
 
-    private boolean isEncryptedString(String str) {
-        if (str == null) return false;
+    protected boolean isEncryptedString(String str) {
         return cipher.isEncryptedString(str);
-    }
-
-    private Path getConfigurationPath() {
-        String location = System.getProperty(SYSTEM_PROPERTY_CONFIGURATION_LOCATION, getConfigurationFile());
-        location = location.charAt(0) == '~' ? System.getProperty("user.home") + location.substring(1) : location;
-        return Paths.get(location);
-    }
-
-    private SettingsSecurity getConfiguration(boolean mandatory) throws SecDispatcherException {
-        Path path = getConfigurationPath();
-        try {
-            SettingsSecurity sec = SecUtil.read(path);
-            if (mandatory && sec == null)
-                throw new SecDispatcherException("Please check that configuration file on path " + path + " exists");
-            return sec;
-        } catch (IOException e) {
-            throw new SecDispatcherException(e.getMessage(), e);
-        }
-    }
-
-    private String getMasterPassword(SettingsSecurity sec, boolean mandatory) throws SecDispatcherException {
-        if (sec == null && !mandatory) {
-            return null;
-        }
-        requireNonNull(sec, "configuration is null");
-        String masterSource = requireNonNull(sec.getMasterSource(), "masterSource is null");
-        for (MasterPasswordSource masterPasswordSource : masterPasswordSources.values()) {
-            String masterPassword = masterPasswordSource.handle(masterSource);
-            if (masterPassword != null) return masterPassword;
-        }
-        if (mandatory) {
-            throw new SecDispatcherException("master password could not be fetched");
-        } else {
-            return null;
-        }
-    }
-
-    private String getMasterCipher(SettingsSecurity sec) throws SecDispatcherException {
-        requireNonNull(sec, "configuration is null");
-        return requireNonNull(sec.getMasterCipher(), "masterCipher is null");
-    }
-
-    public String getConfigurationFile() {
-        return configurationFile;
     }
 }

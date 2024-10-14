@@ -21,19 +21,20 @@ package org.codehaus.plexus.components.secdispatcher.internal.sources;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSource;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-import org.codehaus.plexus.components.secdispatcher.internal.MasterPasswordSource;
 
 import static java.util.Objects.requireNonNull;
 
 /**
  * Master password source support class.
  */
-public abstract class MasterPasswordSourceSupport implements MasterPasswordSource {
+public abstract class MasterSourceSupport implements MasterSource {
     private final Predicate<String> matcher;
     private final Function<String, String> transformer;
 
-    public MasterPasswordSourceSupport(Predicate<String> matcher, Function<String, String> transformer) {
+    public MasterSourceSupport(Predicate<String> matcher, Function<String, String> transformer) {
         this.matcher = requireNonNull(matcher);
         this.transformer = requireNonNull(transformer);
     }
@@ -47,4 +48,13 @@ public abstract class MasterPasswordSourceSupport implements MasterPasswordSourc
     }
 
     protected abstract String doHandle(String transformed) throws SecDispatcherException;
+
+    public SecDispatcher.ValidationResponse validateConfiguration(String masterSource) {
+        if (matcher.test(masterSource)) {
+            return doValidateConfiguration(transformer.apply(masterSource));
+        }
+        return null;
+    }
+
+    protected abstract SecDispatcher.ValidationResponse doValidateConfiguration(String transformed);
 }

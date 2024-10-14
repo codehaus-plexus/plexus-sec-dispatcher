@@ -29,22 +29,41 @@ import java.net.StandardProtocolFamily;
 import java.net.UnixDomainSocketAddress;
 import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HexFormat;
+import java.util.List;
+import java.util.Optional;
 
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Password source that uses GnuPG Agent.
+ * <p>
+ * Config: {@code gpg-agent:$agentSocketPath[?non-interactive]}
  */
 @Singleton
-@Named(GpgAgentMasterPasswordSource.NAME)
-public final class GpgAgentMasterPasswordSource extends PrefixMasterPasswordSourceSupport {
+@Named(GpgAgentMasterSource.NAME)
+public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implements MasterSourceMeta {
     public static final String NAME = "gpg-agent";
 
-    public GpgAgentMasterPasswordSource() {
+    public GpgAgentMasterSource() {
         super(NAME + ":");
+    }
+
+    @Override
+    public String description() {
+        return "GPG Agent (agent socket path should be edited)";
+    }
+
+    @Override
+    public Optional<String> configTemplate() {
+        return Optional.of(NAME + ":$agentSocketPath");
     }
 
     @Override
@@ -67,6 +86,39 @@ public final class GpgAgentMasterPasswordSource extends PrefixMasterPasswordSour
         } catch (IOException e) {
             throw new SecDispatcherException(e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected SecDispatcher.ValidationResponse doValidateConfiguration(String transformed) {
+        HashMap<SecDispatcher.ValidationResponse.Level, List<String>> report = new HashMap<>();
+        boolean valid = false;
+
+        String extra = "";
+        if (transformed.contains("?")) {
+            extra = transformed.substring(transformed.indexOf("?"));
+            transformed = transformed.substring(0, transformed.indexOf("?"));
+        }
+        Path socketLocation = Paths.get(transformed);
+        if (!socketLocation.isAbsolute()) {
+            socketLocation = Paths.get(System.getProperty("user.home"))
+                    .resolve(socketLocation)
+                    .toAbsolutePath();
+        }
+        if (Files.exists(socketLocation)) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
+                    .add("Unix domain socket for GPG Agent does not exist. Maybe you need to start gpg-agent?");
+        } else {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
+                    .add("Unix domain socket for GPG Agent exist");
+            valid = true;
+        }
+        boolean interactive = !extra.contains("non-interactive");
+        if (!interactive) {
+            report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.WARNING, k -> new ArrayList<>())
+                    .add(
+                            "Non-interactive flag found, gpg-agent will not ask for passphrase, it can use only cached ones");
+        }
+        return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), valid, report, List.of());
     }
 
     private String load(Path socketPath, boolean interactive) throws IOException {

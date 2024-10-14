@@ -26,8 +26,8 @@ import static java.util.Objects.requireNonNull;
 /**
  * Master password source support class for simple "prefix" use case.
  */
-public abstract class PrefixMasterPasswordSourceSupport extends MasterPasswordSourceSupport {
-    public PrefixMasterPasswordSourceSupport(String prefix) {
+public abstract class PrefixMasterSourceSupport extends MasterSourceSupport {
+    public PrefixMasterSourceSupport(String prefix) {
         super(prefixMatcher(prefix), prefixRemover(prefix));
     }
 

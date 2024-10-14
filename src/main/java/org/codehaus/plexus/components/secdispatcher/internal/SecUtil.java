@@ -48,7 +48,7 @@ public final class SecUtil {
     private SecUtil() {}
 
     /**
-     * Reads the configuration model up, optionally resolving relocation too.
+     * Reads the configuration model up, if exists, otherwise returns {@code null}.
      */
     public static SettingsSecurity read(Path configurationFile) throws IOException {
         requireNonNull(configurationFile, "configurationFile must not be null");
@@ -65,6 +65,9 @@ public final class SecUtil {
         }
     }
 
+    /**
+     * Returns config with given name, or {@code null} if not exist.
+     */
     public static Map<String, String> getConfig(SettingsSecurity sec, String name) {
         if (sec != null && name != null) {
             List<Config> cl = sec.getConfigurations();
@@ -88,6 +91,14 @@ public final class SecUtil {
         return null;
     }
 
+    public static String specVersion() {
+        String specVer = SecDispatcher.class.getPackage().getSpecificationVersion();
+        if (specVer == null) {
+            specVer = "test"; // in UT
+        }
+        return specVer;
+    }
+
     private static final boolean IS_WINDOWS =
             System.getProperty("os.name", "unknown").startsWith("Windows");
 
@@ -99,7 +110,7 @@ public final class SecUtil {
         Path tempFile = parent.resolve(target.getFileName() + "."
                 + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".tmp");
 
-        configuration.setModelVersion(SecDispatcher.class.getPackage().getSpecificationVersion());
+        configuration.setModelVersion(specVersion());
         configuration.setModelEncoding(StandardCharsets.UTF_8.name());
 
         try {

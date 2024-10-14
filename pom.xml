@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>3.0.1-SNAPSHOT</version>
+  <version>4.0.0-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
 
@@ -35,9 +35,16 @@
   <properties>
     <javaVersion>17</javaVersion>
     <project.build.outputTimestamp>2024-09-29T15:16:00Z</project.build.outputTimestamp>
+
+    <version.slf4j>2.0.16</version.slf4j>
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${version.slf4j}</version>
+    </dependency>
     <dependency>
       <groupId>org.codehaus.plexus</groupId>
       <artifactId>plexus-cipher</artifactId>
@@ -62,6 +69,12 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${version.slf4j}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -75,7 +88,7 @@
         <artifactId>modello-maven-plugin</artifactId>
         <version>2.4.0</version>
         <configuration>
-          <version>3.0.0</version>
+          <version>4.0.0</version>
           <models>
             <model>src/main/mdo/settings-security.mdo</model>
           </models>
@@ -96,6 +109,9 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
+          <systemPropertyVariables>
+            <masterPassword>masterPw</masterPassword>
+          </systemPropertyVariables>
           <environmentVariables>
             <MASTER_PASSWORD>masterPw</MASTER_PASSWORD>
           </environmentVariables>

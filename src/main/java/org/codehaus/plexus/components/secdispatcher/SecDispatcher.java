@@ -14,46 +14,35 @@
 package org.codehaus.plexus.components.secdispatcher;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 
 /**
- * This component decrypts a string, passed to it
+ * This component decrypts a string, passed to it using various dispatchers.
  *
  * @author Oleg Gusakov
  */
 public interface SecDispatcher {
     /**
-     * The default path of configuration.
-     * <p>
-     * The character {@code ~} (tilde) may be present as first character ONLY and is
-     * interpreted as "user.home" system property, and it MUST be followed by path separator.
-     */
-    String DEFAULT_CONFIGURATION = "~/.m2/settings-security.xml";
-
-    /**
-     * Java System Property that may be set, to override configuration path.
-     */
-    String SYSTEM_PROPERTY_CONFIGURATION_LOCATION = "settings.security";
-
-    /**
-     * Attribute that selects a dispatcher.
+     * Attribute that selects a dispatcher. If not present in {@link #encrypt(String, Map)} attributes, the
+     * configured "default dispatcher" is used.
      *
      * @see #availableDispatchers()
      */
     String DISPATCHER_NAME_ATTR = "name";
 
     /**
-     * Returns the set of available dispatcher names, never {@code null}.
+     * Attribute for version, added by SecDispatcher for possible upgrade path.
      */
-    Set<String> availableDispatchers();
+    String DISPATCHER_VERSION_ATTR = "version";
 
     /**
-     * Returns the set of available ciphers, never {@code null}.
+     * Returns the set of available dispatcher metadata, never {@code null}.
      */
-    Set<String> availableCiphers();
+    Set<DispatcherMeta> availableDispatchers();
 
     /**
      * Encrypt given plaintext string.
@@ -63,7 +52,7 @@ public interface SecDispatcher {
      * @return encrypted string
      * @throws SecDispatcherException in case of problem
      */
-    String encrypt(String str, Map<String, String> attr) throws SecDispatcherException;
+    String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException;
 
     /**
      * Decrypt given encrypted string.
@@ -72,7 +61,12 @@ public interface SecDispatcher {
      * @return decrypted string
      * @throws SecDispatcherException in case of problem
      */
-    String decrypt(String str) throws SecDispatcherException;
+    String decrypt(String str) throws SecDispatcherException, IOException;
+
+    /**
+     * Returns {@code true} if passed in string contains "legacy" password (Maven3 kind).
+     */
+    boolean isLegacyPassword(String str);
 
     /**
      * Reads the effective configuration, eventually creating new instance if not present.
@@ -90,4 +84,50 @@ public interface SecDispatcher {
      * @throws IOException In case of IO problem
      */
     void writeConfiguration(SettingsSecurity configuration) throws IOException;
+
+    /**
+     * The validation response.
+     */
+    final class ValidationResponse {
+        public enum Level {
+            INFO,
+            WARNING,
+            ERROR
+        };
+
+        private final String source;
+        private final boolean valid;
+        private final Map<Level, List<String>> report;
+        private final List<ValidationResponse> subsystems;
+
+        public ValidationResponse(
+                String source, boolean valid, Map<Level, List<String>> report, List<ValidationResponse> subsystems) {
+            this.source = source;
+            this.valid = valid;
+            this.report = report;
+            this.subsystems = subsystems;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public Map<Level, List<String>> getReport() {
+            return report;
+        }
+
+        public List<ValidationResponse> getSubsystems() {
+            return subsystems;
+        }
+    }
+
+    /**
+     * Performs a "deep validation" and reports the status. If return instance {@link ValidationResponse#isValid()}
+     * is {@code true}, configuration is usable.
+     */
+    ValidationResponse validateConfiguration();
 }
