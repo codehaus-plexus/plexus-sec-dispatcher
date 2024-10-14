@@ -27,14 +27,15 @@ import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
  */
 public interface SecDispatcher {
     /**
-     * Attribute that selects a dispatcher.
+     * Attribute that selects a dispatcher. If not present in {@link #encrypt(String, Map)} attributes, the
+     * configured "default dispatcher" is used.
      *
      * @see #availableDispatchers()
      */
     String DISPATCHER_NAME_ATTR = "name";
 
     /**
-     * Attribute for version that dispatcher should use.
+     * Attribute for version, added by SecDispatcher for possible upgrade path.
      */
     String DISPATCHER_VERSION_ATTR = "version";
 

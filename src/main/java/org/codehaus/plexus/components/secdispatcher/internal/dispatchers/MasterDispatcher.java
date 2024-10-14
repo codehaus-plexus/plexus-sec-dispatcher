@@ -42,6 +42,9 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
 
     private static final String CONF_MASTER_CIPHER = "cipher";
     private static final String CONF_MASTER_SOURCE = "source";
+    /**
+     * Attribute holding the Cipher name used to encrypt the password.
+     */
     private static final String MASTER_CIPHER_ATTR = CONF_MASTER_CIPHER;
 
     private final PlexusCipher cipher;
