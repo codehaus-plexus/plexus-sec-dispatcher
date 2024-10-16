@@ -2,6 +2,7 @@ Plexus-Sec-Dispatcher
 =====================
 
 [![Maven Central](https://img.shields.io/maven-central/v/org.codehaus.plexus/plexus-sec-dispatcher.svg?label=Maven%20Central)](https://search.maven.org/artifact/org.codehaus.plexus/plexus-sec-dispatcher)
+[![Reproducible Builds](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/jvm-repo-rebuild/reproducible-central/master/content/org/codehaus/plexus/plexus-sec-dispatcher/badge.json)](https://github.com/jvm-repo-rebuild/reproducible-central/blob/master/content/org/codehaus/plexus/plexus-sec-dispatcher/README.md)
 
 The current master is now at https://github.com/codehaus-plexus/plexus-sec-dispatcher
 
