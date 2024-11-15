@@ -32,6 +32,8 @@ import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.codehaus.plexus.components.secdispatcher.model.io.stax.SecurityConfigurationStaxWriter;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -171,5 +173,24 @@ public class DefaultSecDispatcherTest {
                         "legacy",
                         new LegacyDispatcher()),
                 CONFIG_PATH);
+    }
+
+    /**
+     * Test values created with Maven 3.9.9.
+     * <p>
+     * master password: "masterpassword"
+     * password: "password"
+     */
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "src/test/legacy/legacy-settings-security-1.xml",
+                "src/test/legacy/legacy-settings-security-2.xml"
+            })
+    void legacy(String xml) throws Exception {
+        System.setProperty("settings.security", xml);
+        SecDispatcher secDispatcher = construct();
+        String cleartext = secDispatcher.decrypt("{L6L/HbmrY+cH+sNkphnq3fguYepTpM04WlIXb8nB1pk=}");
+        assertEquals("password", cleartext);
     }
 }

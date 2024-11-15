@@ -133,7 +133,7 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public String decrypt(String str) throws SecDispatcherException, IOException {
-        if (!isEncryptedString(str)) return str;
+        if (!isAnyEncryptedString(str)) return str;
         String bare = unDecorate(str);
         Map<String, String> attr = requireNonNull(stripAttributes(bare));
         if (isLegacyEncryptedString(str)) {
