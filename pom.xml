@@ -10,14 +10,14 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>4.0.2-SNAPSHOT</version>
+  <version>4.0.2</version>
 
   <name>Plexus Security Dispatcher Component</name>
 
   <scm>
     <connection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</connection>
     <developerConnection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>plexus-sec-dispatcher-4.0.2</tag>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</url>
   </scm>
   <issueManagement>
@@ -34,7 +34,7 @@
 
   <properties>
     <javaVersion>17</javaVersion>
-    <project.build.outputTimestamp>2024-10-14T17:37:09Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2024-11-15T12:39:07Z</project.build.outputTimestamp>
 
     <version.slf4j>2.0.16</version.slf4j>
   </properties>
