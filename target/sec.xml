@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settingsSecurity xmlns="http://codehaus-plexus.github.io/plexus-sec-dispatcher/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://codehaus-plexus.github.io/plexus-sec-dispatcher/4.0.0 https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-4.0.0.xsd">
+  <modelVersion>test</modelVersion>
+  <defaultDispatcher>magic:mighty</defaultDispatcher>
+  <configurations>
+    <configuration>
+      <name>cname</name>
+      <properties>
+        <property>
+          <name>pname</name>
+          <value>pval</value>
+        </property>
+      </properties>
+    </configuration>
+  </configurations>
+</settingsSecurity>

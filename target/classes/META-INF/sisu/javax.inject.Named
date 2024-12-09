@@ -1,0 +1,8 @@
+org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding
+org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher
+org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher
+org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource
+org.codehaus.plexus.components.secdispatcher.internal.sources.FileMasterSource
+org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource
+org.codehaus.plexus.components.secdispatcher.internal.sources.PinEntryMasterSource
+org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterSource
