@@ -18,12 +18,9 @@
  */
 package org.codehaus.plexus.components.secdispatcher.internal.sources;
 
-import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
-import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
-import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,6 +28,10 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
+import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 
 /**
  * Password source that uses a plain file with plaintext master password (residing on things like an encrypted pen-drive
@@ -96,7 +97,11 @@ public final class FileMasterSource extends PrefixMasterSourceSupport implements
         Path file = Paths.get(transformed);
         if (file.isAbsolute() && Files.exists(file)) {
             try {
-                return Files.readAllLines(file).stream().filter(l -> l.startsWith("#")).map(String::trim).findFirst().orElse(null);
+                return Files.readAllLines(file).stream()
+                        .filter(l -> l.startsWith("#"))
+                        .map(String::trim)
+                        .findFirst()
+                        .orElse(null);
             } catch (IOException e) {
                 throw new SecDispatcherException("Failed to read file '" + transformed + "'", e);
             }
