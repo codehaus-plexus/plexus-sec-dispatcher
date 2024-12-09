@@ -152,9 +152,13 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
         }
         if (Files.exists(xml)) {
             try (InputStream is = Files.newInputStream(xml)) {
-                return (String) XPathFactory.newInstance()
+                String result = (String) XPathFactory.newInstance()
                         .newXPath()
                         .evaluate("//master", new InputSource(is), XPathConstants.STRING);
+                if (result != null) {
+                    result = result.trim();
+                }
+                return result;
             } catch (Exception e) {
                 // just ignore whatever it is
             }
