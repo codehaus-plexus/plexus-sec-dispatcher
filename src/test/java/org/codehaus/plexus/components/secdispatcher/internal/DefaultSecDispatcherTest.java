@@ -131,9 +131,9 @@ public class DefaultSecDispatcherTest {
         assertFalse(
                 secDispatcher.isEncryptedString("Oleg was here {12345678901234567890123456789012345678901234567890}"));
         assertTrue(secDispatcher.isLegacyEncryptedString(
-                "Oleg was here {12345678901234567890123456789012345678901234567890}"));
+                "{12345678901234567890123456789012345678901234567890} Oleg was here"));
         assertTrue(secDispatcher.isLegacyEncryptedString(
-                "Oleg was here {12345678901234567890123456789012345678901234567890}"));
+                "Oleg {12345678901234567890123456789012345678901234567890} was here"));
 
         // contains {} in the middle
         assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
