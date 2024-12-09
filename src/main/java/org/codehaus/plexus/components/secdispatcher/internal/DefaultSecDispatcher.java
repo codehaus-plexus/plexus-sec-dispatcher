@@ -133,11 +133,17 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public String decrypt(String str) throws SecDispatcherException, IOException {
-        if (!isAnyEncryptedString(str)) return str;
-        String bare = unDecorate(str);
-        Map<String, String> attr = requireNonNull(stripAttributes(bare));
+        String bare;
+        Map<String, String> attr;
         if (isLegacyEncryptedString(str)) {
+            bare = unDecorateLegacy(str);
+            attr = new HashMap<>();
             attr.put(DISPATCHER_NAME_ATTR, LegacyDispatcher.NAME);
+        } else if (isEncryptedString(str)) {
+            bare = unDecorate(str);
+            attr = requireNonNull(stripAttributes(bare));
+        } else {
+            return str;
         }
         String name = attr.get(DISPATCHER_NAME_ATTR);
         Dispatcher dispatcher = dispatchers.get(name);
@@ -172,14 +178,20 @@ public class DefaultSecDispatcher implements SecDispatcher {
      */
     @Override
     public boolean isLegacyEncryptedString(String str) {
-        boolean looksLike = str != null
-                && !str.isBlank()
-                && str.startsWith(SHIELD_BEGIN)
-                && str.endsWith(SHIELD_END)
-                && !unDecorate(str).contains(SHIELD_BEGIN)
-                && !unDecorate(str).contains(SHIELD_END);
-        if (looksLike) {
-            return stripAttributes(unDecorate(str)).isEmpty();
+        if (str != null && str.contains(SHIELD_BEGIN)) {
+            str = str.substring(str.indexOf(SHIELD_BEGIN));
+            if (str.contains(SHIELD_END)) {
+                str = str.substring(0, str.indexOf(SHIELD_END) + 1);
+                String undecorated = unDecorate(str);
+                boolean looksLike = !str.isBlank()
+                        && str.startsWith(SHIELD_BEGIN)
+                        && str.endsWith(SHIELD_END)
+                        && !undecorated.contains(SHIELD_BEGIN)
+                        && !undecorated.contains(SHIELD_END);
+                if (looksLike) {
+                    return stripAttributes(undecorated).isEmpty();
+                }
+            }
         }
         return false;
     }
@@ -308,5 +320,11 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     protected String unDecorate(String str) {
         return str.substring(SHIELD_BEGIN.length(), str.length() - SHIELD_END.length());
+    }
+
+    protected String unDecorateLegacy(String str) {
+        str = str.substring(str.indexOf(SHIELD_BEGIN));
+        str = str.substring(0, str.indexOf(SHIELD_END) + 1);
+        return unDecorate(str);
     }
 }
