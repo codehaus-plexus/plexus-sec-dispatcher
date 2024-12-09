@@ -122,16 +122,29 @@ public class DefaultSecDispatcherTest {
 
         assertFalse(secDispatcher.isEncryptedString("{foo}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{foo}"));
+        assertFalse(secDispatcher.isEncryptedString("Oleg was here {foo}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("Oleg was here {foo}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("Oleg {foo} was here"));
 
         assertFalse(secDispatcher.isEncryptedString("{12345678901234567890123456789012345678901234567890}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{12345678901234567890123456789012345678901234567890}"));
+        assertFalse(
+                secDispatcher.isEncryptedString("Oleg was here {12345678901234567890123456789012345678901234567890}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString(
+                "{12345678901234567890123456789012345678901234567890} Oleg was here"));
+        assertTrue(secDispatcher.isLegacyEncryptedString(
+                "Oleg {12345678901234567890123456789012345678901234567890} was here"));
 
         // contains {} in the middle
         assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
         assertFalse(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+        assertFalse(secDispatcher.isLegacyEncryptedString(
+                "Oleg was here {KDvsYOFLlX{}gH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
 
         assertFalse(secDispatcher.isEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
+        assertTrue(
+                secDispatcher.isLegacyEncryptedString("Oleg was here {KDvsYOFLlXgH4LU8tvpzAGg5otiosZXvfdQq0yO86LU=}"));
 
         assertTrue(
                 secDispatcher.isEncryptedString(
@@ -191,6 +204,12 @@ public class DefaultSecDispatcherTest {
         System.setProperty("settings.security", xml);
         SecDispatcher secDispatcher = construct();
         String cleartext = secDispatcher.decrypt("{L6L/HbmrY+cH+sNkphnq3fguYepTpM04WlIXb8nB1pk=}");
+        assertEquals("password", cleartext);
+
+        cleartext = secDispatcher.decrypt("Oleg was here {L6L/HbmrY+cH+sNkphnq3fguYepTpM04WlIXb8nB1pk=}");
+        assertEquals("password", cleartext);
+
+        cleartext = secDispatcher.decrypt("Oleg {L6L/HbmrY+cH+sNkphnq3fguYepTpM04WlIXb8nB1pk=} was here");
         assertEquals("password", cleartext);
     }
 }
