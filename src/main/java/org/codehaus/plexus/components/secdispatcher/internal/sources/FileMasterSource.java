@@ -98,7 +98,7 @@ public final class FileMasterSource extends PrefixMasterSourceSupport implements
         if (file.isAbsolute() && Files.exists(file)) {
             try {
                 return Files.readAllLines(file).stream()
-                        .filter(l -> l.startsWith("#"))
+                        .filter(l -> !l.startsWith("#"))
                         .map(String::trim)
                         .findFirst()
                         .orElse(null);
