@@ -124,7 +124,7 @@ public class DefaultSecDispatcherTest {
         assertTrue(secDispatcher.isLegacyEncryptedString("{foo}"));
         assertFalse(secDispatcher.isEncryptedString("Oleg was here {foo}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("Oleg was here {foo}"));
-        assertTrue(secDispatcher.isLegacyEncryptedString("Oleg was here {foo}"));
+        assertTrue(secDispatcher.isLegacyEncryptedString("Oleg {foo} was here"));
 
         assertFalse(secDispatcher.isEncryptedString("{12345678901234567890123456789012345678901234567890}"));
         assertTrue(secDispatcher.isLegacyEncryptedString("{12345678901234567890123456789012345678901234567890}"));
