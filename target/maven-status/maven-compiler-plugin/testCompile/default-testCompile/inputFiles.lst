@@ -1,6 +1,0 @@
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/DefaultSecDispatcherTest.java
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/SecUtilTest.java
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/cipher/AESGCMNoPaddingTest.java
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/cipher/CipherTestSupport.java
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/dispatchers/LegacyDispatcherTest.java
-/home/cstamas/Worx/codehaus-plexus/plexus-sec-dispatcher/src/test/java/org/codehaus/plexus/components/secdispatcher/internal/sources/SourcesTest.java
