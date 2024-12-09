@@ -1,0 +1,7 @@
+org.codehaus.plexus.components.secdispatcher
+org.codehaus.plexus.components.secdispatcher.internal
+org.codehaus.plexus.components.secdispatcher.internal.cipher
+org.codehaus.plexus.components.secdispatcher.internal.dispatchers
+org.codehaus.plexus.components.secdispatcher.internal.sources
+org.codehaus.plexus.components.secdispatcher.model
+org.codehaus.plexus.components.secdispatcher.model.io.stax
