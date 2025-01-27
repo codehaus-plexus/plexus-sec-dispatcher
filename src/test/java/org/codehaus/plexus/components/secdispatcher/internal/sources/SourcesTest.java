@@ -49,4 +49,13 @@ public class SourcesTest {
         // ypu may adjust path, this is Fedora40 WS + gnome
         assertEquals("masterPw", source.handle("pinentry-prompt:/usr/bin/pinentry-gnome3"));
     }
+
+    @Disabled("enable and add 1Passwort item with password 'masterPw'")
+    @Test
+    void onePassword() {
+        OnePasswordCliMasterSource source = new OnePasswordCliMasterSource();
+        // assume you have 1Password CLI installed and vault "Employee" contains item "Maven Master" with field
+        // "password"
+        assertEquals("masterPw", source.handle("onepassword:op://Employee/Maven Master/password"));
+    }
 }
