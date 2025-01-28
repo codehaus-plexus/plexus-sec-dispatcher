@@ -13,6 +13,7 @@
   <version>4.0.4-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
+  <description>This library provides encryption/decryption functionality with pluggable ciphers and password providers</description>
 
   <scm>
     <connection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</connection>
@@ -97,6 +98,13 @@
               <goal>stax-reader</goal>
               <goal>stax-writer</goal>
             </goals>
+          </execution>
+          <execution>
+            <id>generate-xdoc</id>
+            <goals>
+              <goal>xdoc</goal>
+            </goals>
+            <phase>pre-site</phase>
           </execution>
         </executions>
       </plugin>
