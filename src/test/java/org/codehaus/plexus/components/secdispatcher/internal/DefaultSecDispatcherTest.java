@@ -22,6 +22,7 @@ import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.ForwardingDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
@@ -78,6 +79,18 @@ public class DefaultSecDispatcherTest {
     void masterWithSystemPropertyRoundTrip() throws Exception {
         saveSec("master", Map.of("source", "system-property:masterPassword", "cipher", AESGCMNoPadding.CIPHER_ALG));
         roundtrip();
+    }
+
+    @Test
+    void forwardingWithEnvDecrypt() throws Exception {
+        saveSec("forwarding", Map.of("source", "env"));
+        decryptForwarding("{[name=forwarding,version=something]env:MASTER_PASSWORD}", "masterPw");
+    }
+
+    @Test
+    void forwardingWithSystemPropertyDecrypt() throws Exception {
+        saveSec("forwarding", Map.of("source", "system-property"));
+        decryptForwarding("{[name=forwarding,version=something]system-property:masterPassword}", "masterPw");
     }
 
     @Test
@@ -157,7 +170,7 @@ public class DefaultSecDispatcherTest {
     protected void roundtrip() throws Exception {
         DefaultSecDispatcher sd = construct();
 
-        assertEquals(2, sd.availableDispatchers().size());
+        assertEquals(3, sd.availableDispatchers().size());
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         // example:
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
@@ -168,6 +181,14 @@ public class DefaultSecDispatcherTest {
         assertTrue(encrypted.contains("a=b"));
         String pass = sd.decrypt(encrypted);
         assertEquals("supersecret", pass);
+    }
+
+    protected void decryptForwarding(String encrypted, String decrypted) throws Exception {
+        DefaultSecDispatcher sd = construct();
+
+        assertEquals(3, sd.availableDispatchers().size());
+        String pass = sd.decrypt(encrypted);
+        assertEquals(decrypted, pass);
     }
 
     protected DefaultSecDispatcher construct() {
@@ -184,7 +205,15 @@ public class DefaultSecDispatcherTest {
                                         GpgAgentMasterSource.NAME,
                                         new GpgAgentMasterSource())),
                         "legacy",
-                        new LegacyDispatcher()),
+                        new LegacyDispatcher(),
+                        "forwarding",
+                        new ForwardingDispatcher(Map.of(
+                                EnvMasterSource.NAME,
+                                new EnvMasterSource(),
+                                SystemPropertyMasterSource.NAME,
+                                new SystemPropertyMasterSource(),
+                                GpgAgentMasterSource.NAME,
+                                new GpgAgentMasterSource()))),
                 CONFIG_PATH);
     }
 

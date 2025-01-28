@@ -13,21 +13,22 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.dispatchers;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
 import org.codehaus.plexus.components.secdispatcher.MasterSource;
 import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * This dispatcher forwards requests fully to defined sources.
@@ -58,29 +59,26 @@ public class ForwardingDispatcher implements Dispatcher, DispatcherMeta {
 
     @Override
     public Collection<Field> fields() {
-        return List.of(
-                Field.builder(CONF_SOURCE)
-                        .optional(false)
-                        .description("Source of the password")
-                        .options(sources.entrySet().stream()
-                                .map(e -> {
-                                    MasterSource ms = e.getValue();
-                                    if (ms instanceof MasterSourceMeta m) {
-                                        Field.Builder b =
-                                                Field.builder(e.getKey()).description(m.description());
-                                        if (m.configTemplate().isPresent()) {
-                                            b.defaultValue(m.configTemplate().get());
-                                        }
-                                        return b.build();
-                                    } else {
-                                        return Field.builder(e.getKey())
-                                                .description(e.getKey()
-                                                        + "(Field not described, needs manual configuration)")
-                                                .build();
-                                    }
-                                })
-                                .toList())
-                        .build());
+        return List.of(Field.builder(CONF_SOURCE)
+                .optional(false)
+                .description("Source of the password")
+                .options(sources.entrySet().stream()
+                        .map(e -> {
+                            MasterSource ms = e.getValue();
+                            if (ms instanceof MasterSourceMeta m) {
+                                Field.Builder b = Field.builder(e.getKey()).description(m.description());
+                                if (m.configTemplate().isPresent()) {
+                                    b.defaultValue(m.configTemplate().get());
+                                }
+                                return b.build();
+                            } else {
+                                return Field.builder(e.getKey())
+                                        .description(e.getKey() + "(Field not described, needs manual configuration)")
+                                        .build();
+                            }
+                        })
+                        .toList())
+                .build());
     }
 
     @Override
