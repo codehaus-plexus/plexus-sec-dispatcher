@@ -18,13 +18,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding;
-import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.ForwardingDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterSourceLookupDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterSource;
@@ -82,15 +84,15 @@ public class DefaultSecDispatcherTest {
     }
 
     @Test
-    void forwardingWithEnvDecrypt() throws Exception {
-        saveSec("forwarding", Map.of("source", "env"));
-        decryptForwarding("{[name=forwarding,version=something]env:MASTER_PASSWORD}", "masterPw");
+    void masterSourceLookupWithEnvDecrypt() throws Exception {
+        saveSec("masterSourceLookup", Collections.emptyMap());
+        assertDecrypted("{[name=masterSourceLookup,version=something]env:MASTER_PASSWORD}", "masterPw");
     }
 
     @Test
-    void forwardingWithSystemPropertyDecrypt() throws Exception {
-        saveSec("forwarding", Map.of("source", "system-property"));
-        decryptForwarding("{[name=forwarding,version=something]system-property:masterPassword}", "masterPw");
+    void masterSourceLookupWithSystemPropertyDecrypt() throws Exception {
+        saveSec("masterSourceLookup", Collections.emptyMap());
+        assertDecrypted("{[name=masterSourceLookup,version=something]system-property:masterPassword}", "masterPw");
     }
 
     @Test
@@ -183,12 +185,12 @@ public class DefaultSecDispatcherTest {
         assertEquals("supersecret", pass);
     }
 
-    protected void decryptForwarding(String encrypted, String decrypted) throws Exception {
+    protected void assertDecrypted(String encrypted, String expectedPlainText) throws Exception {
         DefaultSecDispatcher sd = construct();
 
         assertEquals(3, sd.availableDispatchers().size());
-        String pass = sd.decrypt(encrypted);
-        assertEquals(decrypted, pass);
+        String plainText = sd.decrypt(encrypted);
+        assertEquals(expectedPlainText, plainText);
     }
 
     protected DefaultSecDispatcher construct() {
@@ -206,14 +208,9 @@ public class DefaultSecDispatcherTest {
                                         new GpgAgentMasterSource())),
                         "legacy",
                         new LegacyDispatcher(),
-                        "forwarding",
-                        new ForwardingDispatcher(Map.of(
-                                EnvMasterSource.NAME,
-                                new EnvMasterSource(),
-                                SystemPropertyMasterSource.NAME,
-                                new SystemPropertyMasterSource(),
-                                GpgAgentMasterSource.NAME,
-                                new GpgAgentMasterSource()))),
+                        "masterSourceLookup",
+                        new MasterSourceLookupDispatcher(List.of(
+                                new EnvMasterSource(), new SystemPropertyMasterSource(), new GpgAgentMasterSource()))),
                 CONFIG_PATH);
     }
 
