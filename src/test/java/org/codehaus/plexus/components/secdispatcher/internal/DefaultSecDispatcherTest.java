@@ -18,12 +18,15 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
+import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterSourceLookupDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.EnvMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.GpgAgentMasterSource;
 import org.codehaus.plexus.components.secdispatcher.internal.sources.SystemPropertyMasterSource;
@@ -78,6 +81,18 @@ public class DefaultSecDispatcherTest {
     void masterWithSystemPropertyRoundTrip() throws Exception {
         saveSec("master", Map.of("source", "system-property:masterPassword", "cipher", AESGCMNoPadding.CIPHER_ALG));
         roundtrip();
+    }
+
+    @Test
+    void masterSourceLookupWithEnvDecrypt() throws Exception {
+        saveSec("masterSourceLookup", Collections.emptyMap());
+        assertDecrypted("{[name=masterSourceLookup,version=something]env:MASTER_PASSWORD}", "masterPw");
+    }
+
+    @Test
+    void masterSourceLookupWithSystemPropertyDecrypt() throws Exception {
+        saveSec("masterSourceLookup", Collections.emptyMap());
+        assertDecrypted("{[name=masterSourceLookup,version=something]system-property:masterPassword}", "masterPw");
     }
 
     @Test
@@ -157,7 +172,7 @@ public class DefaultSecDispatcherTest {
     protected void roundtrip() throws Exception {
         DefaultSecDispatcher sd = construct();
 
-        assertEquals(2, sd.availableDispatchers().size());
+        assertEquals(3, sd.availableDispatchers().size());
         String encrypted = sd.encrypt("supersecret", Map.of(SecDispatcher.DISPATCHER_NAME_ATTR, "master", "a", "b"));
         // example:
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
@@ -168,6 +183,14 @@ public class DefaultSecDispatcherTest {
         assertTrue(encrypted.contains("a=b"));
         String pass = sd.decrypt(encrypted);
         assertEquals("supersecret", pass);
+    }
+
+    protected void assertDecrypted(String encrypted, String expectedPlainText) throws Exception {
+        DefaultSecDispatcher sd = construct();
+
+        assertEquals(3, sd.availableDispatchers().size());
+        String plainText = sd.decrypt(encrypted);
+        assertEquals(expectedPlainText, plainText);
     }
 
     protected DefaultSecDispatcher construct() {
@@ -184,7 +207,10 @@ public class DefaultSecDispatcherTest {
                                         GpgAgentMasterSource.NAME,
                                         new GpgAgentMasterSource())),
                         "legacy",
-                        new LegacyDispatcher()),
+                        new LegacyDispatcher(),
+                        "masterSourceLookup",
+                        new MasterSourceLookupDispatcher(List.of(
+                                new EnvMasterSource(), new SystemPropertyMasterSource(), new GpgAgentMasterSource()))),
                 CONFIG_PATH);
     }
 
