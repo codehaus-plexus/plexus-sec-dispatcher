@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>4.0.4-SNAPSHOT</version>
+  <version>4.1.0-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
   <description>This library provides encryption/decryption functionality with pluggable ciphers and password providers</description>
