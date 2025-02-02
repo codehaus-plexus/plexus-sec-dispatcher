@@ -110,7 +110,9 @@ public final class SecUtil {
         Path tempFile = parent.resolve(target.getFileName() + "."
                 + Long.toUnsignedString(ThreadLocalRandom.current().nextLong()) + ".tmp");
 
-        configuration.setModelVersion(specVersion());
+        // always set manually as some features don't require changes in the underlying model but still require
+        // adjustments of either minor or major version of the JAR
+        configuration.setModelVersion("4.0");
         configuration.setModelEncoding(StandardCharsets.UTF_8.name());
 
         try {
