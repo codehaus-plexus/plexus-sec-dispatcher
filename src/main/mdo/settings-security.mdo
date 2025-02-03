@@ -16,7 +16,7 @@
 <model xmlns="http://codehaus-plexus.github.io/MODELLO/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://codehaus-plexus.github.io/MODELLO/2.0.0 https://codehaus-plexus.github.io/modello/xsd/modello-2.0.0.xsd"
   xml.namespace="http://codehaus-plexus.github.io/plexus-sec-dispatcher/${version}"
-  xml.schemaLocation="https://codehaus-plexus.github.io/xsd/plexus-sec-dispatcher-${version}.xsd">
+  xml.schemaLocation="https://codehaus-plexus.github.io/plexus-sec-dispatcher/xsd/settings-security-${version}.xsd">
 
   <id>settings-security</id>
   <name>SecurityConfiguration</name>
