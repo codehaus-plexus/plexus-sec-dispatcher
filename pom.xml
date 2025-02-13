@@ -16,11 +16,12 @@
   <description>This library provides encryption/decryption functionality with pluggable ciphers and password providers</description>
 
   <scm>
-    <connection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</connection>
-    <developerConnection>scm:git:git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</developerConnection>
+    <connection>scm:git:https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</developerConnection>
     <tag>HEAD</tag>
-    <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</url>
+    <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/tree/${project.scm.tag}/</url>
   </scm>
+
   <issueManagement>
     <system>jira</system>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/issues</url>
