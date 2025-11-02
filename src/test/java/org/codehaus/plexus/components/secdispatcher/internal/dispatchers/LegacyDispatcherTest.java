@@ -20,7 +20,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class LegacyDispatcherTest {
+class LegacyDispatcherTest {
     /**
      * Test values created with Maven 3.9.9.
      * <p>
