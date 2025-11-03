@@ -41,7 +41,7 @@ public abstract class CipherTestSupport {
     abstract Cipher getCipher();
 
     @Test
-    void testEncrypt() throws Exception {
+    void encrypt() throws Exception {
         String enc = pbeCipher.encrypt(clearText, password);
         assertNotNull(enc);
         String enc2 = pbeCipher.encrypt(clearText, password);
@@ -50,14 +50,14 @@ public abstract class CipherTestSupport {
     }
 
     @Test
-    void testDecrypt() throws Exception {
+    void decrypt() throws Exception {
         String enc = pbeCipher.encrypt(clearText, password);
         String clear = pbeCipher.decrypt(enc, password);
         assertEquals(clearText, clear);
     }
 
     @Test
-    void testEncoding() throws Exception {
+    void encoding() throws Exception {
         String pwd = "äüöÜÖÄæøåčćžšđß\"§$%&/()=?é";
         String encPwd = pbeCipher.encrypt(pwd, pwd);
         String decPwd = pbeCipher.decrypt(encPwd, pwd);

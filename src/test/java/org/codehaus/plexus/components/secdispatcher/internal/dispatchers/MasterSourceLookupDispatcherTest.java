@@ -25,10 +25,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class MasterSourceLookupDispatcherTest {
+class MasterSourceLookupDispatcherTest {
 
     @Test
-    void testUnknownPrefix() {
+    void unknownPrefix() {
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
                 new MasterSourceLookupDispatcher(Collections.singleton(new EnvMasterSource()));
         assertThrows(
@@ -40,7 +40,7 @@ public class MasterSourceLookupDispatcherTest {
     }
 
     @Test
-    void testSystemPropertyMasterSourceDecrypt() {
+    void systemPropertyMasterSourceDecrypt() {
         System.setProperty("myprop", "plaintext");
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
                 new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
@@ -50,7 +50,7 @@ public class MasterSourceLookupDispatcherTest {
     }
 
     @Test
-    void testEncrypt() {
+    void encrypt() {
         System.setProperty("myprop", "plaintext");
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
                 new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
@@ -60,7 +60,7 @@ public class MasterSourceLookupDispatcherTest {
     }
 
     @Test
-    void testValidateConfiguration() {
+    void validateConfiguration() {
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
                 new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
         ValidationResponse response = masterSourceLookupDispatcher.validateConfiguration(Collections.emptyMap());
