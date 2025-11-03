@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * surefire plugin set system property and env.
  */
-public class SourcesTest {
+class SourcesTest {
     @Test
     void systemProperty() {
         SystemPropertyMasterSource source = new SystemPropertyMasterSource();

@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @version $Id$
  *
  */
-public class SecUtilTest {
+class SecUtilTest {
     String _confName = "cname";
     String _propName = "pname";
     String _propVal = "pval";
@@ -64,7 +64,7 @@ public class SecUtilTest {
     }
 
     @Test
-    void readWrite() throws IOException {
+    void readWrite() throws Exception {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
@@ -75,7 +75,7 @@ public class SecUtilTest {
     }
 
     @Test
-    void readWriteWithBackup() throws IOException {
+    void readWriteWithBackup() throws Exception {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
         assertNotNull(config);
