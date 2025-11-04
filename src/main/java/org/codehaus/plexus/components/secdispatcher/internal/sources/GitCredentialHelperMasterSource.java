@@ -194,9 +194,10 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
                 writer.println("protocol=" + uri.getScheme());
             }
             if (uri.getHost() != null && !uri.getHost().isEmpty()) {
-                writer.println("host=" + uri.getHost());
                 if (uri.getPort() != -1) {
                     writer.println("host=" + uri.getHost() + ":" + uri.getPort());
+                } else {
+                    writer.println("host=" + uri.getHost());
                 }
             }
             if (uri.getPath() != null && !uri.getPath().isEmpty()) {
