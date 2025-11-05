@@ -28,6 +28,8 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -133,6 +135,9 @@ class GitCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(
+            value = OS.WINDOWS,
+            disabledReason = "Windows batch files don't handle closed stdin gracefully in validation tests")
     void testHandleWithMockHelper() throws SecDispatcherException {
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
@@ -175,6 +180,9 @@ class GitCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(
+            value = OS.WINDOWS,
+            disabledReason = "Windows batch files don't handle closed stdin gracefully in validation tests")
     void testValidateConfigurationWithMockHelper() {
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
