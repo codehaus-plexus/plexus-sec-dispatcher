@@ -47,25 +47,40 @@ class GitCredentialHelperMasterSourceTest {
     @BeforeAll
     static void setup() throws IOException {
         // Create a mock git credential helper script
-        mockHelperPath = tempDir.resolve("mock-git-credential-helper");
-        String script = "#!/bin/sh\n"
-                + "if [ \"$1\" = \"get\" ]; then\n"
-                + "  # Read input (we don't actually parse it in this simple mock)\n"
-                + "  while IFS= read -r line; do\n"
-                + "    [ -z \"$line\" ] && break\n"
-                + "  done\n"
-                + "  # Return mock credentials\n"
-                + "  echo \"protocol=https\"\n"
-                + "  echo \"host=maven.apache.org\"\n"
-                + "  echo \"username=testuser\"\n"
-                + "  echo \"password=testPassword123\"\n"
-                + "fi\n";
-
-        Files.writeString(mockHelperPath, script);
-        // Make it executable
+        // On Windows, create a batch file; on Unix-like systems, create a shell script
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            // On Windows, we can't easily make shell scripts executable, skip this test setup
+            mockHelperPath = tempDir.resolve("mock-git-credential-helper.bat");
+            String batchScript = "@echo off\r\n"
+                    + "if \"%1\"==\"get\" (\r\n"
+                    + "  REM Read input until empty line\r\n"
+                    + "  :loop\r\n"
+                    + "  set /p line=\r\n"
+                    + "  if not defined line goto output\r\n"
+                    + "  goto loop\r\n"
+                    + "  :output\r\n"
+                    + "  echo protocol=https\r\n"
+                    + "  echo host=maven.apache.org\r\n"
+                    + "  echo username=testuser\r\n"
+                    + "  echo password=testPassword123\r\n"
+                    + ")\r\n";
+            Files.writeString(mockHelperPath, batchScript);
         } else {
+            mockHelperPath = tempDir.resolve("mock-git-credential-helper");
+            String script = "#!/bin/sh\n"
+                    + "if [ \"$1\" = \"get\" ]; then\n"
+                    + "  # Read input (we don't actually parse it in this simple mock)\n"
+                    + "  while IFS= read -r line; do\n"
+                    + "    [ -z \"$line\" ] && break\n"
+                    + "  done\n"
+                    + "  # Return mock credentials\n"
+                    + "  echo \"protocol=https\"\n"
+                    + "  echo \"host=maven.apache.org\"\n"
+                    + "  echo \"username=testuser\"\n"
+                    + "  echo \"password=testPassword123\"\n"
+                    + "fi\n";
+
+            Files.writeString(mockHelperPath, script);
+            // Make it executable on Unix-like systems
             Files.setPosixFilePermissions(
                     mockHelperPath,
                     Set.of(
@@ -119,11 +134,6 @@ class GitCredentialHelperMasterSourceTest {
 
     @Test
     void testHandleWithMockHelper() throws SecDispatcherException {
-        // Skip on Windows as shell script execution is problematic
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            return;
-        }
-
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
         String config = mockHelperPath.toString() + "?url=https://maven.apache.org/master";
@@ -166,11 +176,6 @@ class GitCredentialHelperMasterSourceTest {
 
     @Test
     void testValidateConfigurationWithMockHelper() {
-        // Skip on Windows
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            return;
-        }
-
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
         String config = mockHelperPath.toString() + "?url=https://maven.apache.org/master";
@@ -182,33 +187,20 @@ class GitCredentialHelperMasterSourceTest {
     }
 
     @Test
-    void testBuildHelperCommandWithShortName() throws Exception {
-        GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
-
-        // Use reflection to test the private buildHelperCommand method
-        java.lang.reflect.Method method =
-                GitCredentialHelperMasterSource.class.getDeclaredMethod("buildHelperCommand", String.class);
-        method.setAccessible(true);
-
-        String result = (String) method.invoke(source, "cache");
+    void testBuildHelperCommandWithShortName() {
+        String result = GitCredentialHelperMasterSource.buildHelperCommand("cache");
         assertEquals("git-credential-cache", result);
 
-        result = (String) method.invoke(source, "store");
+        result = GitCredentialHelperMasterSource.buildHelperCommand("store");
         assertEquals("git-credential-store", result);
     }
 
     @Test
-    void testBuildHelperCommandWithPath() throws Exception {
-        GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
-
-        java.lang.reflect.Method method =
-                GitCredentialHelperMasterSource.class.getDeclaredMethod("buildHelperCommand", String.class);
-        method.setAccessible(true);
-
-        String result = (String) method.invoke(source, "/usr/local/bin/git-credential-osxkeychain");
+    void testBuildHelperCommandWithPath() {
+        String result = GitCredentialHelperMasterSource.buildHelperCommand("/usr/local/bin/git-credential-osxkeychain");
         assertEquals("/usr/local/bin/git-credential-osxkeychain", result);
 
-        result = (String) method.invoke(source, "./relative/path/helper");
+        result = GitCredentialHelperMasterSource.buildHelperCommand("./relative/path/helper");
         assertEquals("./relative/path/helper", result);
     }
 }

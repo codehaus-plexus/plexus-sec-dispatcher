@@ -240,7 +240,7 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
         return password;
     }
 
-    private String buildHelperCommand(String helperName) {
+    static String buildHelperCommand(String helperName) {
         // If helper name contains a path separator, use it as-is (absolute or relative path)
         // Otherwise, prefix with "git-credential-"
         if (helperName.contains("/") || helperName.contains("\\")) {
