@@ -1,2 +1,0 @@
-_extends: .github
-tag-template: sec-dispatcher-$NEXT_MINOR_VERSION
