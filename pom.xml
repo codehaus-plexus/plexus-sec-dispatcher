@@ -38,6 +38,7 @@
     <javaVersion>17</javaVersion>
     <project.build.outputTimestamp>2025-02-02T18:08:23Z</project.build.outputTimestamp>
 
+    <version.sisu>1.1.0</version.sisu>
     <version.slf4j>2.0.18</version.slf4j>
   </properties>
 
@@ -57,7 +58,7 @@
     <dependency>
       <groupId>org.eclipse.sisu</groupId>
       <artifactId>org.eclipse.sisu.inject</artifactId>
-      <version>${sisuMavenPluginVersion}</version>
+      <version>${version.sisu}</version>
       <scope>provided</scope>
     </dependency>
 
