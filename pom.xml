@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>4.2.0</version>
+  <version>4.2.1-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
   <description>This library provides encryption/decryption functionality with pluggable ciphers and password providers</description>
@@ -36,7 +36,7 @@
 
   <properties>
     <javaVersion>17</javaVersion>
-    <project.build.outputTimestamp>2026-08-19T19:22:39Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2026-08-19T19:23:58Z</project.build.outputTimestamp>
 
     <version.sisu>1.1.0</version.sisu>
     <version.slf4j>2.0.18</version.slf4j>
