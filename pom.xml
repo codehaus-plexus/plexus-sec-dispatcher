@@ -17,7 +17,7 @@
 
   <scm>
     <connection>scm:git:https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:codehaus-plexus/plexus-sec-dispatcher.git</developerConnection>
+    <developerConnection>${project.scm.connection}</developerConnection>
     <tag>HEAD</tag>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/tree/${project.scm.tag}/</url>
   </scm>
