@@ -23,7 +23,6 @@ public issue — see [SECURITY.md](https://github.com/codehaus-plexus/.github/bl
 <dependency>
   <groupId>org.codehaus.plexus</groupId>
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>4.1.0</version>
 </dependency>
 ```
 
