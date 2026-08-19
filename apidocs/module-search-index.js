@@ -1,1 +1,1 @@
-moduleSearchIndex = [];updateSearchResults();
+moduleSearchIndex = [{"l":"org.codehaus.plexus.components.secdispatcher"}];updateSearchResults();

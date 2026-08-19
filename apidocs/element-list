@@ -1,3 +1,4 @@
+module:org.codehaus.plexus.components.secdispatcher
 org.codehaus.plexus.components.secdispatcher
 org.codehaus.plexus.components.secdispatcher.internal
 org.codehaus.plexus.components.secdispatcher.internal.cipher
