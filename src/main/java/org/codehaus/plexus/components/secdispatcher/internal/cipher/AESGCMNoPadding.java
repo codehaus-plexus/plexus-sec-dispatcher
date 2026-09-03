@@ -27,13 +27,13 @@ import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Named;
 import javax.inject.Singleton;
+import javax.security.auth.DestroyFailedException;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.KeySpec;
 import java.util.Base64;
 
 import org.codehaus.plexus.components.secdispatcher.CipherException;
@@ -60,6 +60,7 @@ public class AESGCMNoPadding implements org.codehaus.plexus.components.secdispat
             Cipher cipher = Cipher.getInstance(CIPHER_ALG);
             cipher.init(Cipher.ENCRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
             byte[] cipherText = cipher.doFinal(clearText.getBytes(StandardCharsets.UTF_8));
+            destroyQuietly(secretKey);
             byte[] cipherTextWithIvSalt = ByteBuffer.allocate(iv.length + salt.length + cipherText.length)
                     .put(iv)
                     .put(salt)
@@ -86,6 +87,7 @@ public class AESGCMNoPadding implements org.codehaus.plexus.components.secdispat
             Cipher cipher = Cipher.getInstance(CIPHER_ALG);
             cipher.init(Cipher.DECRYPT_MODE, secretKey, new GCMParameterSpec(TAG_LENGTH_BIT, iv));
             byte[] plainText = cipher.doFinal(cipherText);
+            destroyQuietly(secretKey);
             return new String(plainText, StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new CipherException("Failed decrypting", e);
@@ -101,7 +103,20 @@ public class AESGCMNoPadding implements org.codehaus.plexus.components.secdispat
     private static SecretKey getAESKeyFromPassword(char[] password, byte[] salt)
             throws NoSuchAlgorithmException, InvalidKeySpecException {
         SecretKeyFactory factory = SecretKeyFactory.getInstance(KEY_FACTORY);
-        KeySpec spec = new PBEKeySpec(password, salt, PBE_ITERATIONS, PBE_KEY_SIZE);
-        return new SecretKeySpec(factory.generateSecret(spec).getEncoded(), KEY_ALGORITHM);
+        PBEKeySpec spec = new PBEKeySpec(password, salt, PBE_ITERATIONS, PBE_KEY_SIZE);
+        SecretKey originalKey = factory.generateSecret(spec);
+        spec.clearPassword();
+        SecretKey derivedKey = new SecretKeySpec(originalKey.getEncoded(), KEY_ALGORITHM);
+        destroyQuietly(originalKey);
+        return derivedKey;
+    }
+
+    private static void destroyQuietly(SecretKey key) {
+        try {
+            key.destroy();
+        } catch (DestroyFailedException e) {
+            // Ignore exception during key destruction as not all SecretKey implementations support destruction
+            // https://bugs.openjdk.org/browse/JDK-8389121
+        }
     }
 }
