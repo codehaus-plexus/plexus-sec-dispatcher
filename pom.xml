@@ -39,7 +39,7 @@
     <project.build.outputTimestamp>2026-08-19T19:23:58Z</project.build.outputTimestamp>
 
     <version.sisu>1.1.0</version.sisu>
-    <version.slf4j>2.0.18</version.slf4j>
+    <version.slf4j>2.0.19</version.slf4j>
   </properties>
 
   <dependencies>
