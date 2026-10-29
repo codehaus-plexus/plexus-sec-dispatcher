@@ -55,12 +55,6 @@
       <version>1</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>org.eclipse.sisu</groupId>
-      <artifactId>org.eclipse.sisu.inject</artifactId>
-      <version>${version.sisu}</version>
-      <scope>provided</scope>
-    </dependency>
 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
