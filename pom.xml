@@ -30,7 +30,8 @@
   <distributionManagement>
     <site>
       <id>github:gh-pages</id>
-      <url>${project.scm.developerConnection}</url>
+      <!-- the published site; scm-publish takes its target from pubScmUrl, and site:deploy is skipped -->
+      <url>https://codehaus-plexus.github.io/plexus-sec-dispatcher/</url>
     </site>
   </distributionManagement>
 
