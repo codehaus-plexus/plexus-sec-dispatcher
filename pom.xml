@@ -10,7 +10,7 @@
   </parent>
 
   <artifactId>plexus-sec-dispatcher</artifactId>
-  <version>4.3.0</version>
+  <version>4.3.1-SNAPSHOT</version>
 
   <name>Plexus Security Dispatcher Component</name>
   <description>This library provides encryption/decryption functionality with pluggable ciphers and password providers</description>
@@ -18,7 +18,7 @@
   <scm>
     <connection>scm:git:https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</connection>
     <developerConnection>${project.scm.connection}</developerConnection>
-    <tag>sec-dispatcher-4.3.0</tag>
+    <tag>sec-dispatcher-4.2.0</tag>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/tree/${project.scm.tag}/</url>
   </scm>
 
@@ -37,7 +37,7 @@
 
   <properties>
     <javaVersion>17</javaVersion>
-    <project.build.outputTimestamp>2026-11-06T10:37:51Z</project.build.outputTimestamp>
+    <project.build.outputTimestamp>2026-11-06T10:38:11Z</project.build.outputTimestamp>
 
     <version.sisu>1.1.1</version.sisu>
     <version.slf4j>2.0.20</version.slf4j>
