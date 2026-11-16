@@ -142,14 +142,14 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implem
                 }
                 // https://unix.stackexchange.com/questions/71135/how-can-i-find-out-what-keys-gpg-agent-has-cached-like-how-ssh-add-l-shows-yo
                 String instruction = "GET_PASSPHRASE "
-                        + (!interactive ? "--no-ask " : "")
+                        + (interactive ? "" : "--no-ask ")
                         + "plexus:secDispatcherMasterPassword"
                         + " "
                         + "X "
                         + "Maven+Master+Password "
                         + "Please+enter+your+Maven+master+password"
                         + "+to+use+it+for+decrypting+Maven+Settings\n";
-                os.write((instruction).getBytes());
+                os.write(instruction.getBytes());
                 os.flush();
                 return mayExpectOK(in);
             }

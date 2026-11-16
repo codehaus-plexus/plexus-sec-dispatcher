@@ -107,7 +107,7 @@ public interface SecDispatcher {
             INFO,
             WARNING,
             ERROR
-        };
+        }
 
         private final String source;
         private final boolean valid;

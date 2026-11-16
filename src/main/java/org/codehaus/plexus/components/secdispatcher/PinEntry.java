@@ -42,7 +42,7 @@ public class PinEntry {
         TIMEOUT,
         NOT_CONFIRMED,
         CANCELED,
-        FAILED;
+        FAILED
     }
 
     public record Result(Outcome outcome, String payload) {}

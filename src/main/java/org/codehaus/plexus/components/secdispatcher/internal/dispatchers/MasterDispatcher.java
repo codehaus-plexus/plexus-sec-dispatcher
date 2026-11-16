@@ -171,7 +171,9 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         }
         for (MasterSource masterPasswordSource : masterSources.values()) {
             String masterPassword = masterPasswordSource.handle(masterSource);
-            if (masterPassword != null) return masterPassword;
+            if (masterPassword != null) {
+                return masterPassword;
+            }
         }
         throw new SecDispatcherException("No source handled the given masterSource: " + masterSource);
     }
