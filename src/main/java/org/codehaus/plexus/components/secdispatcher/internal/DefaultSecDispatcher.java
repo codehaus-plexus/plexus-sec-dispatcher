@@ -97,7 +97,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
 
     @Override
     public String encrypt(String str, Map<String, String> attr) throws SecDispatcherException, IOException {
-        if (isEncryptedString(str)) return str;
+        if (isEncryptedString(str)) {
+            return str;
+        }
         if (attr == null) {
             attr = new HashMap<>();
         } else {
@@ -116,7 +118,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
         }
         String name = attr.get(DISPATCHER_NAME_ATTR);
         Dispatcher dispatcher = dispatchers.get(name);
-        if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+        if (dispatcher == null) {
+            throw new SecDispatcherException("No dispatcher exist with name " + name);
+        }
         Dispatcher.EncryptPayload payload = dispatcher.encrypt(str, attr, prepareDispatcherConfig(name));
         HashMap<String, String> resultAttributes = new HashMap<>(payload.getAttributes());
         resultAttributes.put(SecDispatcher.DISPATCHER_NAME_ATTR, name);
@@ -147,7 +151,9 @@ public class DefaultSecDispatcher implements SecDispatcher {
         }
         String name = attr.get(DISPATCHER_NAME_ATTR);
         Dispatcher dispatcher = dispatchers.get(name);
-        if (dispatcher == null) throw new SecDispatcherException("No dispatcher exist with name " + name);
+        if (dispatcher == null) {
+            throw new SecDispatcherException("No dispatcher exist with name " + name);
+        }
         return dispatcher.decrypt(strip(bare), attr, prepareDispatcherConfig(name));
     }
 
@@ -301,15 +307,23 @@ public class DefaultSecDispatcher implements SecDispatcher {
         int start = str.indexOf(ATTR_START);
         int stop = str.indexOf(ATTR_STOP);
         if (start != -1 && stop != -1 && stop > start) {
-            if (start != 0) throw new SecDispatcherException("Attributes can be prefix only");
-            if (stop == start + 1) return null;
+            if (start != 0) {
+                throw new SecDispatcherException("Attributes can be prefix only");
+            }
+            if (stop == start + 1) {
+                return null;
+            }
             String attrs = str.substring(start + 1, stop).trim();
-            if (attrs.isEmpty()) return null;
+            if (attrs.isEmpty()) {
+                return null;
+            }
             StringTokenizer st = new StringTokenizer(attrs, ",");
             while (st.hasMoreTokens()) {
                 String pair = st.nextToken();
                 int pos = pair.indexOf('=');
-                if (pos == -1) throw new SecDispatcherException("Attribute malformed: " + pair);
+                if (pos == -1) {
+                    throw new SecDispatcherException("Attribute malformed: " + pair);
+                }
                 String key = pair.substring(0, pos).trim();
                 String val = pair.substring(pos + 1).trim();
                 result.put(key, val);
