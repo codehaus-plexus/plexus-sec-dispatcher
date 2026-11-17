@@ -49,6 +49,7 @@ public abstract class MasterSourceSupport implements MasterSource {
 
     protected abstract String doHandle(String transformed) throws SecDispatcherException;
 
+    @Override
     public SecDispatcher.ValidationResponse validateConfiguration(String masterSource) {
         if (matcher.test(masterSource)) {
             return doValidateConfiguration(transformer.apply(masterSource));
