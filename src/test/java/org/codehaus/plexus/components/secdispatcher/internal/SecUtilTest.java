@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
@@ -55,7 +54,7 @@ class SecUtilTest {
         conf.setName(_confName);
         conf.addProperty(cp);
         sec.addConfiguration(conf);
-        SecUtil.write(Paths.get(path), sec, false);
+        SecUtil.write(Path.of(path), sec, false);
     }
 
     @BeforeEach

@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -90,7 +89,7 @@ public class PinEntryMasterSource extends PrefixMasterSourceSupport implements M
         HashMap<SecDispatcher.ValidationResponse.Level, List<String>> report = new HashMap<>();
         boolean valid = false;
 
-        Path pinentry = Paths.get(transformed);
+        Path pinentry = Path.of(transformed);
         if (!Files.exists(pinentry)) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                     .add("Configured pinentry command not found");
