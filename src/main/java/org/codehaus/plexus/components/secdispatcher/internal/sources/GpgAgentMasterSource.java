@@ -31,7 +31,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.SocketChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HexFormat;
@@ -76,9 +75,9 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implem
         String socketLocation = transformed;
         boolean interactive = !extra.contains("non-interactive");
         try {
-            Path socketLocationPath = Paths.get(socketLocation);
+            Path socketLocationPath = Path.of(socketLocation);
             if (!socketLocationPath.isAbsolute()) {
-                socketLocationPath = Paths.get(System.getProperty("user.home"))
+                socketLocationPath = Path.of(System.getProperty("user.home"))
                         .resolve(socketLocationPath)
                         .toAbsolutePath();
             }
@@ -98,9 +97,9 @@ public final class GpgAgentMasterSource extends PrefixMasterSourceSupport implem
             extra = transformed.substring(transformed.indexOf("?"));
             transformed = transformed.substring(0, transformed.indexOf("?"));
         }
-        Path socketLocation = Paths.get(transformed);
+        Path socketLocation = Path.of(transformed);
         if (!socketLocation.isAbsolute()) {
-            socketLocation = Paths.get(System.getProperty("user.home"))
+            socketLocation = Path.of(System.getProperty("user.home"))
                     .resolve(socketLocation)
                     .toAbsolutePath();
         }

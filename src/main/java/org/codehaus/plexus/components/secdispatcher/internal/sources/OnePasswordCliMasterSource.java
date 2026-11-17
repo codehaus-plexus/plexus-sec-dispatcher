@@ -73,7 +73,7 @@ public final class OnePasswordCliMasterSource extends PrefixMasterSourceSupport 
             return execute1PasswordCli(Arrays.asList("read", transformed, "--no-newline"), 30);
         } catch (Exception e) {
             throw new SecDispatcherException(
-                    String.format("1Password CLI reported an error reading %s: %s", transformed, e.getMessage()), e);
+                    "1Password CLI reported an error reading %s: %s".formatted(transformed, e.getMessage()), e);
         }
     }
 
@@ -92,22 +92,21 @@ public final class OnePasswordCliMasterSource extends PrefixMasterSourceSupport 
             } catch (IllegalStateException e) {
                 report.put(
                         SecDispatcher.ValidationResponse.Level.ERROR,
-                        List.of(String.format(
-                                "1Password CLI reported an error reading secret item %s: %s",
-                                transformed, e.getMessage())));
+                        List.of("1Password CLI reported an error reading secret item %s: %s"
+                                .formatted(transformed, e.getMessage())));
             } catch (IOException e) {
                 report.put(
                         SecDispatcher.ValidationResponse.Level.ERROR,
-                        List.of(String.format("General issue executing 1Password CLI: %s", e.getMessage())));
+                        List.of("General issue executing 1Password CLI: %s".formatted(e.getMessage())));
             }
         } catch (IllegalStateException e) {
             report.put(
                     SecDispatcher.ValidationResponse.Level.ERROR,
-                    List.of(String.format("1Password CLI reported an error exposing the version: %s", e.getMessage())));
+                    List.of("1Password CLI reported an error exposing the version: %s".formatted(e.getMessage())));
         } catch (IOException e) {
             report.put(
                     SecDispatcher.ValidationResponse.Level.ERROR,
-                    List.of(String.format("Seems 1Password CLI is not installed: %s", e.getMessage())));
+                    List.of("Seems 1Password CLI is not installed: %s".formatted(e.getMessage())));
         }
         return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), isValid, report, List.of());
     }
@@ -129,8 +128,8 @@ public final class OnePasswordCliMasterSource extends PrefixMasterSourceSupport 
             }
             int exitCode = process.exitValue();
             if (exitCode != 0) {
-                throw new IllegalStateException(String.format(
-                        "1Password CLI process exited with code %d, Error: %s", exitCode, error.toString()));
+                throw new IllegalStateException(
+                        "1Password CLI process exited with code %d, Error: %s".formatted(exitCode, error.toString()));
             } else {
                 return output.toString();
             }

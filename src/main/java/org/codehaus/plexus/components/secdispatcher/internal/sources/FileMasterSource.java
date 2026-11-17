@@ -24,7 +24,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -94,7 +93,7 @@ public final class FileMasterSource extends PrefixMasterSourceSupport implements
     }
 
     private String readFile(String transformed) throws SecDispatcherException {
-        Path file = Paths.get(transformed);
+        Path file = Path.of(transformed);
         if (file.isAbsolute() && Files.exists(file)) {
             try {
                 return Files.readAllLines(file).stream()

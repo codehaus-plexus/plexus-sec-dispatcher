@@ -26,7 +26,6 @@ import javax.xml.xpath.XPathFactory;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
@@ -146,9 +145,9 @@ public class LegacyDispatcher implements Dispatcher, DispatcherMeta {
         Path xml;
         String override = System.getProperty(MASTER_MASTER_PASSWORD);
         if (override != null) {
-            xml = Paths.get(override);
+            xml = Path.of(override);
         } else {
-            xml = Paths.get(System.getProperty("user.home"), ".m2", "settings-security.xml");
+            xml = Path.of(System.getProperty("user.home"), ".m2", "settings-security.xml");
         }
         if (Files.exists(xml)) {
             try (InputStream is = Files.newInputStream(xml)) {

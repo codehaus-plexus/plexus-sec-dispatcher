@@ -17,7 +17,6 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +42,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DefaultSecDispatcherTest {
-    private final Path CONFIG_PATH = Paths.get("./target/sec.xml");
+    private final Path CONFIG_PATH = Path.of("./target/sec.xml");
 
     private void saveSec(String dispatcher, Map<String, String> config) throws Exception {
         SettingsSecurity sec = new SettingsSecurity();

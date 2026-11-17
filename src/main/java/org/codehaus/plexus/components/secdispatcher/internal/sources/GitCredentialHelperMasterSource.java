@@ -101,9 +101,8 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
             return retrievePassword(helperName, url);
         } catch (IOException | InterruptedException e) {
             throw new SecDispatcherException(
-                    String.format(
-                            "Failed to retrieve password from git credential helper '%s': %s",
-                            helperName, e.getMessage()),
+                    "Failed to retrieve password from git credential helper '%s': %s"
+                            .formatted(helperName, e.getMessage()),
                     e);
         }
     }
@@ -138,7 +137,7 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
                 new URI(url);
             } catch (URISyntaxException e) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                        .add(String.format("Invalid URL format: %s", e.getMessage()));
+                        .add("Invalid URL format: %s".formatted(e.getMessage()));
                 return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), false, report, List.of());
             }
 
@@ -152,22 +151,20 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
                 if (!process.waitFor(2, TimeUnit.SECONDS)) {
                     process.destroyForcibly();
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.WARNING, k -> new ArrayList<>())
-                            .add(String.format(
-                                    "Git credential helper '%s' did not respond in time. It may still work.",
-                                    helperName));
+                            .add("Git credential helper '%s' did not respond in time. It may still work."
+                                    .formatted(helperName));
                     isValid = true; // Still consider it valid, just warn
                 } else if (process.exitValue() == 127 || process.exitValue() == 126) {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                            .add(String.format("Git credential helper '%s' not found or not executable", helperName));
+                            .add("Git credential helper '%s' not found or not executable".formatted(helperName));
                 } else {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
-                            .add(String.format("Git credential helper '%s' is available", helperName));
+                            .add("Git credential helper '%s' is available".formatted(helperName));
                     isValid = true;
                 }
             } catch (IOException e) {
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                        .add(String.format(
-                                "Failed to execute git credential helper '%s': %s", helperName, e.getMessage()));
+                        .add("Failed to execute git credential helper '%s': %s".formatted(helperName, e.getMessage()));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
@@ -175,7 +172,7 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
             }
         } catch (Exception e) {
             report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
-                    .add(String.format("Validation error: %s", e.getMessage()));
+                    .add("Validation error: %s".formatted(e.getMessage()));
         }
 
         return new SecDispatcher.ValidationResponse(getClass().getSimpleName(), isValid, report, List.of());
@@ -230,7 +227,7 @@ public final class GitCredentialHelperMasterSource extends PrefixMasterSourceSup
         if (exitCode != 0) {
             String errorOutput = readProcessError(process);
             throw new IOException(
-                    String.format("Git credential helper exited with code %d. Error: %s", exitCode, errorOutput));
+                    "Git credential helper exited with code %d. Error: %s".formatted(exitCode, errorOutput));
         }
 
         if (password == null || password.isEmpty()) {
