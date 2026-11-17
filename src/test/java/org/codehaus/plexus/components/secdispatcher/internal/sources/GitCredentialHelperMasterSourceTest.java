@@ -106,7 +106,7 @@ class GitCredentialHelperMasterSourceTest {
     }
 
     @Test
-    void testHandleReturnsNullForNonMatchingPrefix() throws SecDispatcherException {
+    void testHandleReturnsNullForNonMatchingPrefix() throws Exception {
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
         assertNull(source.handle("env:SOME_VAR"));
@@ -138,7 +138,7 @@ class GitCredentialHelperMasterSourceTest {
     @DisabledOnOs(
             value = OS.WINDOWS,
             disabledReason = "Windows batch files don't handle closed stdin gracefully in validation tests")
-    void testHandleWithMockHelper() throws SecDispatcherException {
+    void testHandleWithMockHelper() throws Exception {
         GitCredentialHelperMasterSource source = new GitCredentialHelperMasterSource();
 
         String config = mockHelperPath.toString() + "?url=https://maven.apache.org/master";
