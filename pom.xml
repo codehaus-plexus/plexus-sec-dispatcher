@@ -18,12 +18,12 @@
   <scm>
     <connection>scm:git:https://github.com/codehaus-plexus/plexus-sec-dispatcher.git</connection>
     <developerConnection>${project.scm.connection}</developerConnection>
-    <tag>sec-dispatcher-4.2.0</tag>
+    <tag>HEAD</tag>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/tree/${project.scm.tag}/</url>
   </scm>
 
   <issueManagement>
-    <system>jira</system>
+    <system>github</system>
     <url>https://github.com/codehaus-plexus/plexus-sec-dispatcher/issues</url>
   </issueManagement>
 
