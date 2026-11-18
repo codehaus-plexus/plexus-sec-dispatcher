@@ -20,7 +20,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.codehaus.plexus.components.secdispatcher.Dispatcher;
 import org.codehaus.plexus.components.secdispatcher.DispatcherMeta;
@@ -73,15 +72,11 @@ public class MasterSourceLookupDispatcher implements Dispatcher, DispatcherMeta 
     @Override
     public String decrypt(String str, Map<String, String> attributes, Map<String, String> config)
             throws SecDispatcherException {
-        Optional<String> plain = sources.stream()
+        return sources.stream()
                 .map(source -> source.handle(str))
                 .filter(Objects::nonNull)
-                .findFirst();
-        if (plain.isPresent()) {
-            return plain.get();
-        } else {
-            throw new SecDispatcherException("No master source found for : " + str);
-        }
+                .findFirst()
+                .orElseThrow(() -> new SecDispatcherException("No master source found for : " + str));
     }
 
     @Override
