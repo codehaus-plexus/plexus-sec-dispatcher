@@ -22,7 +22,8 @@ import org.codehaus.plexus.components.secdispatcher.model.Config;
 import org.codehaus.plexus.components.secdispatcher.model.ConfigProperty;
 import org.codehaus.plexus.components.secdispatcher.model.SettingsSecurity;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -62,27 +63,23 @@ class SecUtilTest {
         saveSec("magic:mighty");
     }
 
-    @Test
-    void readWrite() throws Exception {
-        Path path = Path.of("./target/sec.xml");
-        SettingsSecurity config = SecUtil.read(path);
+    private void assertConfig(SettingsSecurity config) {
         assertNotNull(config);
         assertEquals("4.0", config.getModelVersion());
         assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
         assertEquals("magic:mighty", config.getDefaultDispatcher());
-        SecUtil.write(path, config, false);
     }
 
-    @Test
-    void readWriteWithBackup() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void readWrite(boolean doBackup) throws Exception {
         Path path = Path.of("./target/sec.xml");
         SettingsSecurity config = SecUtil.read(path);
-        assertNotNull(config);
-        assertEquals("4.0", config.getModelVersion());
-        assertEquals(StandardCharsets.UTF_8.name(), config.getModelEncoding());
-        assertEquals("magic:mighty", config.getDefaultDispatcher());
-        SecUtil.write(path, config, true);
+        assertConfig(config);
+        SecUtil.write(path, config, doBackup);
         assertTrue(Files.exists(path));
-        assertTrue(Files.exists(path.getParent().resolve(path.getFileName() + ".bak")));
+        if (doBackup) {
+            assertTrue(Files.exists(path.getParent().resolve(path.getFileName() + ".bak")));
+        }
     }
 }

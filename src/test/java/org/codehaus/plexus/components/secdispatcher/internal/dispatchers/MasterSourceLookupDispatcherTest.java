@@ -11,7 +11,7 @@
 
 package org.codehaus.plexus.components.secdispatcher.internal.dispatchers;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.Dispatcher.EncryptPayload;
@@ -30,7 +30,7 @@ class MasterSourceLookupDispatcherTest {
     @Test
     void unknownPrefix() {
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
-                new MasterSourceLookupDispatcher(Collections.singleton(new EnvMasterSource()));
+                new MasterSourceLookupDispatcher(List.of(new EnvMasterSource()));
         assertThrows(
                 SecDispatcherException.class,
                 () -> masterSourceLookupDispatcher.decrypt("unknown-prefix:test", Map.of(), Map.of()));
@@ -43,7 +43,7 @@ class MasterSourceLookupDispatcherTest {
     void systemPropertyMasterSourceDecrypt() {
         System.setProperty("myprop", "plaintext");
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
-                new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
+                new MasterSourceLookupDispatcher(List.of(new SystemPropertyMasterSource()));
         // SecDispatcher "un decorates" the PW
         String cleartext = masterSourceLookupDispatcher.decrypt("system-property:myprop", Map.of(), Map.of());
         assertEquals("plaintext", cleartext);
@@ -53,7 +53,7 @@ class MasterSourceLookupDispatcherTest {
     void encrypt() {
         System.setProperty("myprop", "plaintext");
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
-                new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
+                new MasterSourceLookupDispatcher(List.of(new SystemPropertyMasterSource()));
         // SecDispatcher "un decorates" the PW
         EncryptPayload payload = masterSourceLookupDispatcher.encrypt("system-property:myprop", Map.of(), Map.of());
         assertEquals("system-property:myprop", payload.getEncrypted());
@@ -62,8 +62,8 @@ class MasterSourceLookupDispatcherTest {
     @Test
     void validateConfiguration() {
         MasterSourceLookupDispatcher masterSourceLookupDispatcher =
-                new MasterSourceLookupDispatcher(Collections.singleton(new SystemPropertyMasterSource()));
-        ValidationResponse response = masterSourceLookupDispatcher.validateConfiguration(Collections.emptyMap());
+                new MasterSourceLookupDispatcher(List.of(new SystemPropertyMasterSource()));
+        ValidationResponse response = masterSourceLookupDispatcher.validateConfiguration(Map.of());
         assertTrue(response.isValid());
     }
 }
