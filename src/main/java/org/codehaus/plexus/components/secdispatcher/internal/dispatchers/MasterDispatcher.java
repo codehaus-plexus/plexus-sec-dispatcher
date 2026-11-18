@@ -39,12 +39,12 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
 public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     public static final String NAME = "master";
 
-    private static final String CONF_MASTER_CIPHER = "cipher";
-    private static final String CONF_MASTER_SOURCE = "source";
     /**
      * Attribute holding the Cipher name used to encrypt the password.
      */
-    private static final String MASTER_CIPHER_ATTR = CONF_MASTER_CIPHER;
+    private static final String CONF_MASTER_CIPHER = "cipher";
+
+    private static final String CONF_MASTER_SOURCE = "source";
 
     protected final Map<String, Cipher> masterCiphers;
     protected final Map<String, MasterSource> masterSources;
@@ -105,7 +105,7 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
         String masterCipher = getMasterCipher(config, true);
         String encrypted = requireCipher(masterCipher).encrypt(str, getMasterPassword(config));
         HashMap<String, String> attr = new HashMap<>(attributes);
-        attr.put(MASTER_CIPHER_ATTR, masterCipher);
+        attr.put(CONF_MASTER_CIPHER, masterCipher);
         return new EncryptPayload(attr, encrypted);
     }
 
@@ -179,19 +179,14 @@ public class MasterDispatcher implements Dispatcher, DispatcherMeta {
     }
 
     protected String getMasterCipher(Map<String, String> source, boolean config) throws SecDispatcherException {
-        if (config) {
-            String masterCipher = source.get(CONF_MASTER_CIPHER);
-            if (masterCipher == null) {
+        String masterCipher = source.get(CONF_MASTER_CIPHER);
+        if (masterCipher == null) {
+            if (config) {
                 throw new SecDispatcherException("Invalid configuration: Missing configuration " + CONF_MASTER_CIPHER);
             }
-            return masterCipher;
-        } else {
-            String masterCipher = source.get(MASTER_CIPHER_ATTR);
-            if (masterCipher == null) {
-                throw new SecDispatcherException("Malformed attributes: Missing attribute " + MASTER_CIPHER_ATTR);
-            }
-            return masterCipher;
+            throw new SecDispatcherException("Malformed attributes: Missing attribute " + CONF_MASTER_CIPHER);
         }
+        return masterCipher;
     }
 
     protected Cipher requireCipher(String name) {

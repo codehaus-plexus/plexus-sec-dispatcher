@@ -26,6 +26,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
@@ -92,11 +93,7 @@ public final class SecUtil {
     }
 
     public static String specVersion() {
-        String specVer = SecDispatcher.class.getPackage().getSpecificationVersion();
-        if (specVer == null) {
-            specVer = "test"; // in UT
-        }
-        return specVer;
+        return Objects.requireNonNullElse(SecDispatcher.class.getPackage().getSpecificationVersion(), "test");
     }
 
     private static final boolean IS_WINDOWS =
