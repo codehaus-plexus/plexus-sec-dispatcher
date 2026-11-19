@@ -58,7 +58,6 @@ class DockerCredentialHelperMasterSourceTest {
     static void setup() throws IOException {
         helperDir = tempDir.resolve("bin");
         Files.createDirectories(helperDir);
-        Path helper = helperDir.resolve("docker-credential-fake");
         String script = "#!/bin/sh\n"
                 + "case \"$1\" in\n"
                 + "  list)\n"
@@ -78,6 +77,14 @@ class DockerCredentialHelperMasterSourceTest {
                 + "    exit 2\n"
                 + "    ;;\n"
                 + "esac\n";
+        writeHelper("docker-credential-fake", script);
+        writeHelper("docker-credential-hang", "#!/bin/sh\ncat >/dev/null\nsleep 10\n");
+        writeHelper("docker-credential-badjson", "#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' 'not json'\n");
+        writeHelper("docker-credential-nosecret", "#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '{\"Secret\":\"\"}'\n");
+    }
+
+    private static void writeHelper(String name, String script) throws IOException {
+        Path helper = helperDir.resolve(name);
         Files.writeString(helper, script);
         Files.setPosixFilePermissions(
                 helper,
@@ -149,6 +156,39 @@ class DockerCredentialHelperMasterSourceTest {
                 () -> source.handle("docker-credential:" + helperDir.resolve("docker-credential-fake")
                         + "?url=https://other.example.com"));
         assertTrue(e.getMessage().contains("credentials not found in native keychain"), e.getMessage());
+    }
+
+    @Test
+    void hangingHelperIsKilledAtTheTimeout() {
+        long start = System.nanoTime();
+        IOException e = assertThrows(
+                IOException.class,
+                () -> DockerCredentialHelperMasterSource.retrieveSecret(
+                        helperDir.resolve("docker-credential-hang").toString(), SERVER, 1));
+
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000;
+        assertTrue(elapsedMillis < 5000, "helper was not killed at the timeout: " + elapsedMillis + " ms");
+        assertTrue(e.getMessage().contains("timed out"), e.getMessage());
+    }
+
+    @Test
+    void invalidJsonIsReported() {
+        IOException e = assertThrows(
+                IOException.class,
+                () -> DockerCredentialHelperMasterSource.retrieveSecret(
+                        helperDir.resolve("docker-credential-badjson").toString(), SERVER, 5));
+
+        assertTrue(e.getMessage().contains("invalid JSON"), e.getMessage());
+    }
+
+    @Test
+    void missingSecretIsReported() {
+        IOException e = assertThrows(
+                IOException.class,
+                () -> DockerCredentialHelperMasterSource.retrieveSecret(
+                        helperDir.resolve("docker-credential-nosecret").toString(), SERVER, 5));
+
+        assertTrue(e.getMessage().contains("did not return a secret"), e.getMessage());
     }
 
     @Test

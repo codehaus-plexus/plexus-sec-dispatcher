@@ -30,7 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.codehaus.plexus.components.secdispatcher.MasterSourceMeta;
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
@@ -62,6 +67,8 @@ public final class DockerCredentialHelperMasterSource extends PrefixMasterSource
     public static final String NAME = "docker-credential";
 
     private static final String CONFIG_FORMAT = NAME + ":helper-name?url=server-url";
+
+    private static final int HELPER_TIMEOUT_SECONDS = 30;
 
     public DockerCredentialHelperMasterSource() {
         super(NAME + ":");
@@ -158,6 +165,13 @@ public final class DockerCredentialHelperMasterSource extends PrefixMasterSource
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.ERROR, k -> new ArrayList<>())
                             .add(String.format(
                                     "Docker credential helper '%s' not found or not executable", helperName));
+                } else if (process.exitValue() != 0) {
+                    // "list" is an extension, so a non-zero exit does not prove the helper cannot serve "get".
+                    report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.WARNING, k -> new ArrayList<>())
+                            .add(String.format(
+                                    "Docker credential helper '%s' exited with code %d during the optional list probe",
+                                    helperName, process.exitValue()));
+                    isValid = true;
                 } else {
                     report.computeIfAbsent(SecDispatcher.ValidationResponse.Level.INFO, k -> new ArrayList<>())
                             .add(String.format("Docker credential helper '%s' is available", helperName));
@@ -181,41 +195,72 @@ public final class DockerCredentialHelperMasterSource extends PrefixMasterSource
     }
 
     private String retrieveSecret(String helperName, String url) throws IOException, InterruptedException {
+        return retrieveSecret(helperName, url, HELPER_TIMEOUT_SECONDS);
+    }
+
+    static String retrieveSecret(String helperName, String url, long timeoutSeconds)
+            throws IOException, InterruptedException {
         Process process = new ProcessBuilder(buildHelperCommand(helperName), "get").start();
-
-        // The protocol passes the server URL on stdin and signals the end of input by closing it
-        try (var out = process.getOutputStream()) {
-            out.write(url.getBytes(StandardCharsets.UTF_8));
-        }
-
-        // Helpers report errors on stdout, so both streams are needed to explain a failure
-        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
-
-        if (!process.waitFor(30, TimeUnit.SECONDS)) {
-            process.destroyForcibly();
-            throw new IOException("Docker credential helper timed out");
-        }
-
-        int exitCode = process.exitValue();
-        if (exitCode != 0) {
-            String message = !stdout.isBlank() ? stdout.trim() : stderr.trim();
-            throw new IOException(
-                    String.format("Docker credential helper exited with code %d. Error: %s", exitCode, message));
-        }
-
-        Map<String, String> reply;
+        ExecutorService readers = Executors.newFixedThreadPool(2, runnable -> {
+            Thread thread = new Thread(runnable, "docker-credential-helper-reader");
+            thread.setDaemon(true);
+            return thread;
+        });
         try {
-            reply = parseJsonObject(stdout);
-        } catch (IllegalArgumentException e) {
-            throw new IOException("Docker credential helper returned invalid JSON: " + e.getMessage(), e);
-        }
+            // The protocol passes the server URL on stdin and signals the end of input by closing it
+            try (var out = process.getOutputStream()) {
+                out.write(url.getBytes(StandardCharsets.UTF_8));
+            }
 
-        String secret = reply.get("Secret");
-        if (secret == null || secret.isEmpty()) {
-            throw new IOException("Docker credential helper did not return a secret");
+            // Drain both pipes concurrently: a helper that keeps a stream open must not outlive the timeout.
+            Future<String> stdoutFuture =
+                    readers.submit(() -> new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
+            Future<String> stderrFuture =
+                    readers.submit(() -> new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
+
+            if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                throw new IOException("Docker credential helper timed out after " + timeoutSeconds + " seconds");
+            }
+            String stdout = await(stdoutFuture);
+            String stderr = await(stderrFuture);
+
+            int exitCode = process.exitValue();
+            if (exitCode != 0) {
+                String message = !stdout.isBlank() ? stdout.trim() : stderr.trim();
+                throw new IOException(
+                        String.format("Docker credential helper exited with code %d. Error: %s", exitCode, message));
+            }
+
+            Map<String, String> reply;
+            try {
+                reply = parseJsonObject(stdout);
+            } catch (IllegalArgumentException e) {
+                throw new IOException("Docker credential helper returned invalid JSON: " + e.getMessage(), e);
+            }
+
+            String secret = reply.get("Secret");
+            if (secret == null || secret.isEmpty()) {
+                throw new IOException("Docker credential helper did not return a secret");
+            }
+            return secret;
+        } finally {
+            readers.shutdownNow();
+            if (process.isAlive()) {
+                process.destroyForcibly();
+            }
         }
-        return secret;
+    }
+
+    private static String await(Future<String> future) throws IOException {
+        try {
+            return future.get(5, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while reading from Docker credential helper", e);
+        } catch (ExecutionException | TimeoutException e) {
+            throw new IOException("Failed to read from Docker credential helper: " + e.getMessage(), e);
+        }
     }
 
     static String buildHelperCommand(String helperName) {
