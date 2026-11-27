@@ -29,7 +29,7 @@ import javax.inject.Singleton;
  * output. New configurations should use the KDF-qualified name: a future KDF can then be added without reusing a name
  * that hides how the key was derived.</p>
  *
- * @since 4.0.3
+ * @since 4.3.1
  */
 @Singleton
 @Named(Pbkdf2AesGcmNoPadding.CIPHER_ALG)
