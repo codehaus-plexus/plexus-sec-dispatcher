@@ -43,7 +43,8 @@ import org.codehaus.plexus.components.secdispatcher.SecDispatcherException;
  *
  * <p>Config: {@code keepassxc:<database>:<entry>?field=password}. The database is opened for every call; the CLI
  * asks for the database password each time because it has no session caching (upstream issue 11746). The secret is
- * never logged.</p>
+ * never logged. The entry path must not contain {@code :}, because the database and entry are split on the last
+ * one.</p>
  *
  * <p>The browser protocol would allow session reuse and is a separate, larger feature; this source deliberately
  * uses the CLI only.</p>
@@ -86,15 +87,18 @@ public final class KeePassXCCliMasterSource extends PrefixMasterSourceSupport im
         Config config = config(transformed);
         try {
             return retrieve(cliCommand, config, CLI_TIMEOUT_SECONDS);
-        } catch (IOException | InterruptedException e) {
-            if (e instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
-            throw new SecDispatcherException(
-                    "Failed to read '" + config.field + "' from KeePassXC entry '" + config.entry + "': "
-                            + e.getMessage(),
-                    e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw failure(config, e);
+        } catch (IOException e) {
+            throw failure(config, e);
         }
+    }
+
+    private static SecDispatcherException failure(Config config, Exception e) {
+        return new SecDispatcherException(
+                "Failed to read '" + config.field + "' from KeePassXC entry '" + config.entry + "': " + e.getMessage(),
+                e);
     }
 
     @Override
@@ -121,9 +125,9 @@ public final class KeePassXCCliMasterSource extends PrefixMasterSourceSupport im
         }
         String target = transformed.substring(0, queryIndex);
         String query = transformed.substring(queryIndex + 1);
-        if (!query.startsWith("field=") || query.length() == 6) {
+        if (!query.startsWith("field=") || query.length() == 6 || query.indexOf('&') >= 0) {
             throw new SecDispatcherException(
-                    "Invalid KeePassXC configuration. Expected field parameter: field=attribute-name");
+                    "Invalid KeePassXC configuration. Expected a single field parameter: field=attribute-name");
         }
         int separator = target.lastIndexOf(':');
         if (separator <= 0 || separator == target.length() - 1) {

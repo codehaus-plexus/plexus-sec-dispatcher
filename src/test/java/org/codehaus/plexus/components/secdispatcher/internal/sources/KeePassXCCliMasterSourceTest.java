@@ -52,6 +52,7 @@ class KeePassXCCliMasterSourceTest {
         Files.writeString(
                 fakeCli,
                 "#!/bin/sh\n"
+                        + "case \" $* \" in *slow*) sleep 30;; esac\n"
                         + "case \" $* \" in *missing*) echo 'Entry not found' >&2; exit 1;; esac\n"
                         + "printf '%s\\n' 's3cret'\n");
         Files.setPosixFilePermissions(
@@ -79,7 +80,7 @@ class KeePassXCCliMasterSourceTest {
     }
 
     @Test
-    void readsTheSecretAndNeverLogsIt() throws Exception {
+    void readsTheSecret() throws Exception {
         String secret = source().handle(config("root/credential"));
         assertEquals("s3cret", secret);
     }
@@ -88,6 +89,36 @@ class KeePassXCCliMasterSourceTest {
     void reportsCliFailure() {
         SecDispatcherException e = assertThrows(SecDispatcherException.class, () -> source().handle(config("missing")));
         assertTrue(e.getMessage().contains("Entry not found"), e.getMessage());
+    }
+
+    @Test
+    void passesArgumentsInOrder() throws Exception {
+        Path argv = tempDir.resolve("argv");
+        Path cli = tempDir.resolve("bin").resolve("echo-args");
+        Files.writeString(cli, "#!/bin/sh\nprintf '%s ' \"$@\" > '" + argv + "'\necho s3cret\n");
+        Files.setPosixFilePermissions(
+                cli,
+                Set.of(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE));
+        new KeePassXCCliMasterSource(cli.toString()).handle("keepassxc:db.kdbx:root/credential?field=password");
+        assertEquals("show -a password db.kdbx root/credential ", Files.readString(argv));
+    }
+
+    @Test
+    void timesOutAndKillsTheCli() {
+        IOException e = assertThrows(
+                IOException.class,
+                () -> KeePassXCCliMasterSource.retrieve(
+                        fakeCli.toString(), new KeePassXCCliMasterSource.Config("db.kdbx", "slow", "password"), 1));
+        assertTrue(e.getMessage().contains("timed out"), e.getMessage());
+    }
+
+    @Test
+    void rejectsExtraQueryParameters() {
+        assertFalse(source().validateConfiguration("keepassxc:db.kdbx:entry?field=password&x=y")
+                .isValid());
     }
 
     @Test
