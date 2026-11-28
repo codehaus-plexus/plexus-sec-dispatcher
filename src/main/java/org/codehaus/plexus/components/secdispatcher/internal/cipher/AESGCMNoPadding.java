@@ -39,9 +39,18 @@ import java.util.Base64;
 
 import org.codehaus.plexus.components.secdispatcher.CipherException;
 
+/**
+ * AES/GCM cipher with a PBKDF2-derived key.
+ *
+ * @deprecated its {@value #CIPHER_ALG} name hides the key derivation function; use
+ *             {@link Pbkdf2AesGcmNoPadding}, whose name is {@code PBKDF2WithHmacSHA512/AES/GCM/NoPadding}. Existing
+ *             encrypted values remain readable and are not affected.
+ */
 @Singleton
 @Named(AESGCMNoPadding.CIPHER_ALG)
+@Deprecated
 public class AESGCMNoPadding implements org.codehaus.plexus.components.secdispatcher.Cipher {
+    /** Legacy cipher name, kept so existing settings.xml files continue to decrypt. */
     public static final String CIPHER_ALG = "AES/GCM/NoPadding";
 
     private static final int TAG_LENGTH_BIT = 128;

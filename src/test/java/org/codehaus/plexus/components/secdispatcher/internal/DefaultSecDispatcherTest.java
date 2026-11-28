@@ -23,6 +23,7 @@ import java.util.Map;
 
 import org.codehaus.plexus.components.secdispatcher.SecDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.cipher.AESGCMNoPadding;
+import org.codehaus.plexus.components.secdispatcher.internal.cipher.Pbkdf2AesGcmNoPadding;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.LegacyDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterDispatcher;
 import org.codehaus.plexus.components.secdispatcher.internal.dispatchers.MasterSourceLookupDispatcher;
@@ -74,6 +75,12 @@ class DefaultSecDispatcherTest {
     void masterWithEnvRoundTrip() throws Exception {
         saveSec("master", Map.of("source", "env:MASTER_PASSWORD", "cipher", AESGCMNoPadding.CIPHER_ALG));
         roundtrip();
+    }
+
+    @Test
+    void masterWithPbkdf2CipherRoundTrip() throws Exception {
+        saveSec("master", Map.of("source", "env:MASTER_PASSWORD", "cipher", Pbkdf2AesGcmNoPadding.CIPHER_ALG));
+        roundtrip(Pbkdf2AesGcmNoPadding.CIPHER_ALG);
     }
 
     @Test
@@ -169,6 +176,10 @@ class DefaultSecDispatcherTest {
     }
 
     protected void roundtrip() throws Exception {
+        roundtrip(AESGCMNoPadding.CIPHER_ALG);
+    }
+
+    protected void roundtrip(String cipher) throws Exception {
         DefaultSecDispatcher sd = construct();
 
         assertEquals(3, sd.availableDispatchers().size());
@@ -177,7 +188,7 @@ class DefaultSecDispatcherTest {
         // {[name=master,cipher=AES/GCM/NoPadding,a=b]vvq66pZ7rkvzSPStGTI9q4QDnsmuDwo+LtjraRel2b0XpcGJFdXcYAHAS75HUA6GLpcVtEkmyQ==}
         assertTrue(encrypted.startsWith("{") && encrypted.endsWith("}"));
         assertTrue(encrypted.contains("name=master"));
-        assertTrue(encrypted.contains("cipher=" + AESGCMNoPadding.CIPHER_ALG));
+        assertTrue(encrypted.contains("cipher=" + cipher));
         assertTrue(encrypted.contains("version=test"));
         assertTrue(encrypted.contains("a=b"));
         String pass = sd.decrypt(encrypted);
@@ -197,7 +208,11 @@ class DefaultSecDispatcherTest {
                 Map.of(
                         "master",
                         new MasterDispatcher(
-                                Map.of(AESGCMNoPadding.CIPHER_ALG, new AESGCMNoPadding()),
+                                Map.of(
+                                        AESGCMNoPadding.CIPHER_ALG,
+                                        new AESGCMNoPadding(),
+                                        Pbkdf2AesGcmNoPadding.CIPHER_ALG,
+                                        new Pbkdf2AesGcmNoPadding()),
                                 Map.of(
                                         EnvMasterSource.NAME,
                                         new EnvMasterSource(),
