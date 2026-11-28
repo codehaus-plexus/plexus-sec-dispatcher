@@ -207,16 +207,19 @@ public final class DockerCredentialHelperMasterSource extends PrefixMasterSource
             return thread;
         });
         try {
-            // The protocol passes the server URL on stdin and signals the end of input by closing it
-            try (var out = process.getOutputStream()) {
-                out.write(url.getBytes(StandardCharsets.UTF_8));
-            }
-
             // Drain both pipes concurrently: a helper that keeps a stream open must not outlive the timeout.
             Future<String> stdoutFuture =
                     readers.submit(() -> new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8));
             Future<String> stderrFuture =
                     readers.submit(() -> new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8));
+
+            // The protocol passes the server URL on stdin and signals the end of input by closing it
+            try (var out = process.getOutputStream()) {
+                out.write(url.getBytes(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                // A helper that fails before reading its input closes the pipe ("Broken pipe"): its own error
+                // message and exit code, reported below, are more useful than this one.
+            }
 
             if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
                 process.destroyForcibly();

@@ -40,8 +40,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@DisabledOnOs(value = OS.WINDOWS, disabledReason = "The fake helper is a POSIX shell script")
 class DockerCredentialHelperMasterSourceTest {
+
+    private static final String POSIX_HELPER = "The fake helper is a POSIX shell script";
 
     private static final String SERVER = "https://registry.example.com/v2/";
 
@@ -56,6 +57,9 @@ class DockerCredentialHelperMasterSourceTest {
      */
     @BeforeAll
     static void setup() throws IOException {
+        if (OS.WINDOWS.isCurrentOs()) {
+            return;
+        }
         helperDir = tempDir.resolve("bin");
         Files.createDirectories(helperDir);
         String script = "#!/bin/sh\n"
@@ -78,6 +82,7 @@ class DockerCredentialHelperMasterSourceTest {
                 + "    ;;\n"
                 + "esac\n";
         writeHelper("docker-credential-fake", script);
+        writeHelper("docker-credential-exits", "#!/bin/sh\necho 'helper failed early'\nexit 1\n");
         writeHelper("docker-credential-hang", "#!/bin/sh\ncat >/dev/null\nsleep 10\n");
         writeHelper("docker-credential-badjson", "#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' 'not json'\n");
         writeHelper("docker-credential-nosecret", "#!/bin/sh\ncat >/dev/null\nprintf '%s\\n' '{\"Secret\":\"\"}'\n");
@@ -138,6 +143,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void testHandleWithHelperByPath() throws SecDispatcherException {
         DockerCredentialHelperMasterSource source = new DockerCredentialHelperMasterSource();
 
@@ -148,6 +154,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void testHandleReportsHelperErrorFromStdout() {
         DockerCredentialHelperMasterSource source = new DockerCredentialHelperMasterSource();
 
@@ -159,6 +166,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void hangingHelperIsKilledAtTheTimeout() {
         long start = System.nanoTime();
         IOException e = assertThrows(
@@ -172,6 +180,20 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
+    void helperExitingWithoutReadingStdinReportsItsOwnError() {
+        for (int i = 0; i < 200; i++) {
+            IOException e = assertThrows(
+                    IOException.class,
+                    () -> DockerCredentialHelperMasterSource.retrieveSecret(
+                            helperDir.resolve("docker-credential-exits").toString(), SERVER, 5));
+
+            assertTrue(e.getMessage().contains("helper failed early"), e.getMessage());
+        }
+    }
+
+    @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void invalidJsonIsReported() {
         IOException e = assertThrows(
                 IOException.class,
@@ -182,6 +204,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void missingSecretIsReported() {
         IOException e = assertThrows(
                 IOException.class,
@@ -192,6 +215,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void testHandleWithMissingHelper() {
         DockerCredentialHelperMasterSource source = new DockerCredentialHelperMasterSource();
 
@@ -227,6 +251,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void testValidateConfigurationWithHelper() {
         DockerCredentialHelperMasterSource source = new DockerCredentialHelperMasterSource();
 
@@ -238,6 +263,7 @@ class DockerCredentialHelperMasterSourceTest {
     }
 
     @Test
+    @DisabledOnOs(value = OS.WINDOWS, disabledReason = POSIX_HELPER)
     void testValidateConfigurationWithMissingHelper() {
         DockerCredentialHelperMasterSource source = new DockerCredentialHelperMasterSource();
 
